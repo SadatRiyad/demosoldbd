@@ -7,6 +7,7 @@ import { useSiteSettings } from "@/lib/useSiteSettings";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useIsAdmin } from "@/lib/useIsAdmin";
 import { Menu } from "lucide-react";
+import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
 
 const NavItems = ({ onNavigate }: { onNavigate?: () => void }) => (
   <nav className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
@@ -21,10 +22,33 @@ const NavItems = ({ onNavigate }: { onNavigate?: () => void }) => (
     <NavLink
       to="/deals"
       onClick={onNavigate}
-      className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      className="group text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       activeClassName="text-foreground"
     >
-      Flash Deals
+      <span className="flex flex-col gap-1">
+        <span>Flash Deals</span>
+        <span className="hidden items-center gap-2 text-[11px] text-muted-foreground md:flex">
+          {([
+            "Electronics",
+            "Fashion",
+            "Food",
+            "Home",
+            "Beauty",
+          ] as const).map((c) => {
+            const Icon = DEAL_CATEGORY_META[c].Icon;
+            return (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1 rounded-full border bg-card px-2 py-0.5"
+                aria-label={c}
+              >
+                <Icon className="h-3 w-3" />
+                <span className="sr-only">{c}</span>
+              </span>
+            );
+          })}
+        </span>
+      </span>
     </NavLink>
     <NavLink
       to="/about"

@@ -131,7 +131,17 @@ export default function Deals() {
                       <SelectContent>
                         {CATEGORIES.map((c) => (
                           <SelectItem key={c} value={c}>
+                        {c === "All" ? (
+                          "All"
+                        ) : (
+                          <span className="inline-flex items-center gap-2">
+                            {(() => {
+                              const Icon = DEAL_CATEGORY_META[c].Icon;
+                              return <Icon className="h-4 w-4" />;
+                            })()}
                             {c}
+                          </span>
+                        )}
                           </SelectItem>
                         ))}
                       </SelectContent>
