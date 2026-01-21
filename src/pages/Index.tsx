@@ -31,6 +31,8 @@ export default function Index() {
 
   const headerKicker = settings.data?.header_kicker ?? "Live drops • Limited stock";
   const heroH1 = settings.data?.hero_h1 ?? "Get it Before it’s Sold — Bangladesh’s Flash Deals Marketplace";
+  const heroH1Mobile = ((settings.data?.content as any)?.heroH1Mobile as string | undefined) ?? "";
+  const heroH1ClampXs = (((settings.data?.content as any)?.heroH1ClampXs as boolean | undefined) ?? false) === true;
   const heroSubtitle =
     settings.data?.hero_subtitle ?? "Limited-stock drops from local sellers. Miss it, it’s gone forever.";
 
@@ -72,7 +74,10 @@ export default function Index() {
             <div className="animate-fade-in">
               <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">{headerKicker}</Badge>
               <h1 className="mt-5 break-words text-balance font-display text-3xl font-extrabold tracking-tight sm:text-4xl md:text-6xl">
-                {heroH1}
+                <span className={heroH1ClampXs ? "sm:hidden max-[360px]:clamp-2" : "sm:hidden"}>
+                  {heroH1Mobile.trim().length > 0 ? heroH1Mobile : heroH1}
+                </span>
+                <span className="hidden sm:inline">{heroH1}</span>
               </h1>
               <p className="mt-4 max-w-xl text-lg text-muted-foreground md:text-xl">
                 {heroSubtitle}
