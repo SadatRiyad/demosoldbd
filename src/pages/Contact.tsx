@@ -11,6 +11,7 @@ import { useSiteSettings } from "@/lib/useSiteSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Clock, MapPin, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const emailSchema = z.string().trim().email().max(255);
 
@@ -73,11 +74,16 @@ export default function Contact() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Tap below to open a chat with our default message.</p>
-              <Button asChild size="lg" className="mt-4 w-full">
-                <a href={whatsappHref} target="_blank" rel="noreferrer">
-                  Chat on WhatsApp
-                </a>
-              </Button>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Button asChild size="lg" className="w-full">
+                  <a href={whatsappHref} target="_blank" rel="noreferrer">
+                    Chat on WhatsApp
+                  </a>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="w-full">
+                  <Link to="/deals">Browse deals</Link>
+                </Button>
+              </div>
               <p className="mt-3 text-xs text-muted-foreground">WhatsApp: {phone}</p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">

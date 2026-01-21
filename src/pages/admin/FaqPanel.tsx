@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/useSiteSettings";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 const itemSchema = z.object({
   q: z.string().trim().min(3).max(140),
@@ -49,7 +51,7 @@ export default function FaqPanel() {
     mode: "onBlur",
   });
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: "items" });
+  const { fields, append, remove, move } = useFieldArray({ control: form.control, name: "items" });
 
   React.useEffect(() => {
     const faq = ((settings.data?.content as any)?.faq as Array<{ q: string; a: string }> | undefined) ?? DEFAULTS;
@@ -75,6 +77,8 @@ export default function FaqPanel() {
     }
   }
 
+  const liveItems = form.watch("items");
+
   return (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -89,9 +93,31 @@ export default function FaqPanel() {
               <CardContent className="space-y-3 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold">Item {idx + 1}</div>
-                  <Button type="button" variant="outline" onClick={() => remove(idx)} disabled={fields.length <= 1}>
-                    Remove
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => move(idx, idx - 1)}
+                      disabled={idx === 0}
+                      aria-label="Move up"
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => move(idx, idx + 1)}
+                      disabled={idx === fields.length - 1}
+                      aria-label="Move down"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => remove(idx)} disabled={fields.length <= 1}>
+                      Remove
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid gap-2">
@@ -121,6 +147,22 @@ export default function FaqPanel() {
           </Button>
         </div>
       </form>
+
+      <Card className="shadow-premium">
+        <CardContent className="p-5">
+          <div className="text-sm font-semibold">Preview</div>
+          <div className="mt-3 rounded-2xl border bg-card p-2">
+            <Accordion type="single" collapsible className="w-full">
+              {(liveItems ?? []).map((it) => (
+                <AccordionItem key={`${it.q}-${it.a}`} value={it.q}>
+                  <AccordionTrigger className="px-4">{it.q || "(Untitled question)"}</AccordionTrigger>
+                  <AccordionContent className="px-4 text-muted-foreground">{it.a || "(No answer yet)"}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

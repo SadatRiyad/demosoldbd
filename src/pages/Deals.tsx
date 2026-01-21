@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { useDeals } from "@/lib/useDeals";
 
@@ -48,6 +49,8 @@ export default function Deals() {
 
   const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
+  const hasActiveFilters = category !== "All" || sort !== "endingSoon";
+
   return (
     <div className="bg-background">
       <section className="relative overflow-hidden bg-hero-gradient">
@@ -62,43 +65,123 @@ export default function Deals() {
       </section>
 
       <section className="container py-10 md:py-14">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <Card className="w-full p-4 shadow-premium lg:w-auto">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Category</div>
-                <Select value={category} onValueChange={(v) => setCategory(v as any)}>
-                  <SelectTrigger className="w-full sm:w-56">
-                    <SelectValue placeholder="Choose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="sticky top-14 z-20 -mx-4 px-4 pb-4 pt-2 md:static md:mx-0 md:px-0 md:pb-0">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <Card className="w-full p-4 shadow-premium md:w-auto">
+              <div className="flex flex-col gap-4">
+                <div className="hidden md:block">
+                  <div className="text-xs font-medium text-muted-foreground">Category</div>
+                  <div className="mt-2 overflow-x-auto">
+                    <ToggleGroup
+                      type="single"
+                      value={category}
+                      onValueChange={(v) => setCategory((v as any) || "All")}
+                      className="justify-start"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <ToggleGroupItem key={c} value={c} variant="outline" size="sm" className="shrink-0">
+                          {c}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 md:hidden">
+                  <div className="grid gap-2">
+                    <div className="text-xs font-medium text-muted-foreground">Category</div>
+                    <Select value={category} onValueChange={(v) => setCategory(v as any)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Choose" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="text-xs font-medium text-muted-foreground">Sort</div>
+                    <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Choose" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="endingSoon">Ending soon</SelectItem>
+                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="stock">Stock</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="hidden md:grid md:grid-cols-2 md:gap-3">
+                  <div className="grid gap-2">
+                    <div className="text-xs font-medium text-muted-foreground">Sort</div>
+                    <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+                      <SelectTrigger className="w-full md:w-56">
+                        <SelectValue placeholder="Choose" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="endingSoon">Ending soon</SelectItem>
+                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="stock">Stock</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!hasActiveFilters}
+                      onClick={() => {
+                        setCategory("All");
+                        setSort("endingSoon");
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Sort</div>
-                <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
-                  <SelectTrigger className="w-full sm:w-56">
-                    <SelectValue placeholder="Choose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="endingSoon">Ending soon</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="stock">Stock</SelectItem>
-                  </SelectContent>
-                </Select>
+            </Card>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                {loading ? "Loading…" : (
+                  <>
+                    Showing <span className="font-medium text-foreground">{filtered.length}</span> deal{filtered.length === 1 ? "" : "s"}
+                    {category !== "All" ? (
+                      <>
+                        {" "}in <span className="font-medium text-foreground">{category}</span>
+                      </>
+                    ) : null}
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {dealsQuery.isError ? (
+                  <div className="text-sm text-muted-foreground">Showing demo deals (couldn’t load live deals).</div>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="md:hidden"
+                  disabled={!hasActiveFilters}
+                  onClick={() => {
+                    setCategory("All");
+                    setSort("endingSoon");
+                  }}
+                >
+                  Reset
+                </Button>
               </div>
             </div>
-          </Card>
-
-          {dealsQuery.isError ? (
-            <div className="text-sm text-muted-foreground">Showing demo deals (couldn’t load live deals).</div>
-          ) : null}
+          </div>
         </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
