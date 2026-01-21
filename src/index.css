@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -17,8 +19,13 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* sold.bd brand */
+    --primary: 142 71% 45%; /* ~ #22c55e */
+    --primary-foreground: 0 0% 100%;
+
+    /* secondary brand accent (~ #3b82f6) */
+    --brand: 217 91% 60%;
+    --brand-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -37,6 +44,12 @@ All colors MUST be HSL.
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    --gradient-hero: radial-gradient(1200px circle at 20% 20%, hsl(var(--primary) / 0.16), transparent 45%),
+      radial-gradient(900px circle at 80% 10%, hsl(var(--brand) / 0.14), transparent 45%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+
+    --shadow-premium: 0 20px 50px -20px hsl(var(--foreground) / 0.25);
 
     --sidebar-background: 0 0% 98%;
 
@@ -65,8 +78,11 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 142 71% 55%;
+    --primary-foreground: 222.2 84% 4.9%;
+
+    --brand: 217 91% 70%;
+    --brand-foreground: 222.2 84% 4.9%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -91,6 +107,22 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --gradient-hero: radial-gradient(1200px circle at 20% 20%, hsl(var(--primary) / 0.20), transparent 45%),
+      radial-gradient(900px circle at 80% 10%, hsl(var(--brand) / 0.18), transparent 45%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+
+    --shadow-premium: 0 20px 50px -20px hsl(var(--foreground) / 0.22);
+  }
+}
+
+@layer utilities {
+  .bg-hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-premium {
+    box-shadow: var(--shadow-premium);
   }
 }
 
@@ -101,5 +133,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+      "Segoe UI Emoji";
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 }
