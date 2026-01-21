@@ -9,6 +9,11 @@ import Deals from "./pages/Deals";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import SiteLayout from "./components/site/SiteLayout";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import BootstrapAdmin from "./pages/admin/BootstrapAdmin";
+import { RequireAuth, RequireAdmin } from "./components/auth/RouteGuards";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +29,26 @@ const App = () => (
             <Route path="/deals" element={<Deals />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route
+                path="/admin/bootstrap"
+                element={
+                  <RequireAuth>
+                    <BootstrapAdmin />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth>
+                    <RequireAdmin>
+                      <AdminDashboard />
+                    </RequireAdmin>
+                  </RequireAuth>
+                }
+              />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
