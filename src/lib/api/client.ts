@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import { API_MODE, NODE_API_BASE_URL, nodeFunctionPath } from "@/lib/api/config";
+import { API_MODE, NODE_API_BASE_URL, NODE_AUTH_REFRESH_PATH, nodeFunctionPath } from "@/lib/api/config";
+import { getNodeAccessToken, refreshNodeSession } from "@/lib/api/nodeAuth";
+import type { ApiRoutes, ApiFunctionName } from "@/lib/api/types";
 
 export type ApiInvokeOptions = {
   method?: string;
@@ -14,9 +16,21 @@ function withSlashTrim(v: string) {
 }
 
 async function getAuthHeader(): Promise<string | null> {
+  if (API_MODE === "node") {
+    const token = getNodeAccessToken();
+    return token ? `Bearer ${token}` : null;
+  }
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   return token ? `Bearer ${token}` : null;
+}
+
+function resolveRefreshUrl(baseUrl: string) {
+  // Allow absolute URLs, otherwise treat as relative to base.
+  if (/^https?:\/\//i.test(NODE_AUTH_REFRESH_PATH)) return NODE_AUTH_REFRESH_PATH;
+  const base = withSlashTrim(baseUrl);
+  const path = NODE_AUTH_REFRESH_PATH.startsWith("/") ? NODE_AUTH_REFRESH_PATH : `/${NODE_AUTH_REFRESH_PATH}`;
+  return `${base}${path}`;
 }
 
 async function fetchWithRetry(url: string, init: RequestInit, retries = 2): Promise<Response> {
@@ -60,7 +74,18 @@ async function invokeNode<T>(functionName: string, opts: ApiInvokeOptions = {}):
   };
 
   try {
-    const res = await fetchWithRetry(url, init, 2);
+    let res = await fetchWithRetry(url, init, 2);
+
+    // Node-mode: auto-refresh once on 401, then retry original request.
+    if (res.status === 401) {
+      const refreshed = await refreshNodeSession(resolveRefreshUrl(base));
+      if (refreshed?.accessToken) {
+        const retryHeaders = new Headers(init.headers);
+        retryHeaders.set("Authorization", `Bearer ${refreshed.accessToken}`);
+        res = await fetchWithRetry(url, { ...init, headers: retryHeaders }, 1);
+      }
+    }
+
     const text = await res.text();
     const json = text ? JSON.parse(text) : null;
     if (!res.ok) {
@@ -88,4 +113,24 @@ export async function apiInvoke<T>(functionName: string, opts: ApiInvokeOptions 
     headers: opts.headers,
   } as any);
   return { data: data ?? null, error: (error as any) ?? null };
+}
+
+// -------------------------
+// Typed overloads (optional but recommended)
+// -------------------------
+
+type MethodsFor<K extends ApiFunctionName> = keyof ApiRoutes[K] & string;
+
+type RouteSpec = { body: unknown; response: unknown };
+type SpecFor<K extends ApiFunctionName, M extends MethodsFor<K>> = ApiRoutes[K][M] extends RouteSpec ? ApiRoutes[K][M] : never;
+
+export async function apiInvokeTyped<K extends ApiFunctionName, M extends MethodsFor<K>>(
+  functionName: K,
+  opts: {
+    method: M;
+    body: SpecFor<K, M>["body"];
+    headers?: Record<string, string>;
+  },
+): Promise<ApiResult<SpecFor<K, M>["response"]>> {
+  return apiInvoke<SpecFor<K, M>["response"]>(functionName, opts);
 }
