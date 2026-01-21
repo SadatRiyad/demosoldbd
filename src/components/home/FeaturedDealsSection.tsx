@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FlashDeal } from "@/config/soldbd";
+import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
 
 function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
   return (
@@ -16,7 +17,16 @@ function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
       />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold">{deal.title}</div>
-        <div className="truncate text-xs text-muted-foreground">{deal.description}</div>
+        <div className="mt-0.5 flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            {(() => {
+              const Icon = DEAL_CATEGORY_META[deal.category].Icon;
+              return <Icon className="h-3.5 w-3.5" />;
+            })()}
+            {deal.category}
+          </div>
+          <div className="truncate text-xs text-muted-foreground">• {deal.description}</div>
+        </div>
       </div>
       <Badge variant={deal.stock <= 0 ? "destructive" : "secondary"}>{deal.stock <= 0 ? "Sold" : `${deal.stock} left`}</Badge>
     </div>

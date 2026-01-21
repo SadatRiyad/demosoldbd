@@ -8,6 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { useDeals } from "@/lib/useDeals";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import { Search } from "lucide-react";
 
 type SortMode = "endingSoon" | "newest" | "stock";
 
@@ -29,6 +32,8 @@ export default function Deals() {
   const [category, setCategory] = React.useState<(typeof CATEGORIES)[number]>("All");
   const [sort, setSort] = React.useState<SortMode>("endingSoon");
   const [page, setPage] = React.useState(1);
+  const [query, setQuery] = React.useState("");
+  const debouncedQuery = useDebouncedValue(query, 250);
 
   const dealsQuery = useDeals();
   const hasDeals = (dealsQuery.data?.length ?? 0) > 0;
@@ -38,18 +43,23 @@ export default function Deals() {
   const pageSize = 8;
 
   const filtered = React.useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
     const base = category === "All" ? deals : deals.filter((d) => d.category === category);
-    return sortDeals(base, sort);
-  }, [category, sort, deals]);
+    const searched =
+      q.length === 0
+        ? base
+        : base.filter((d) => `${d.title} ${d.description}`.toLowerCase().includes(q));
+    return sortDeals(searched, sort);
+  }, [category, debouncedQuery, sort, deals]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
 
-  React.useEffect(() => setPage(1), [category, sort]);
+  React.useEffect(() => setPage(1), [category, sort, debouncedQuery]);
 
   const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const hasActiveFilters = category !== "All" || sort !== "endingSoon";
+  const hasActiveFilters = category !== "All" || sort !== "endingSoon" || debouncedQuery.trim().length > 0;
 
   return (
     <div className="bg-background">
@@ -69,6 +79,20 @@ export default function Deals() {
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <Card className="w-full p-4 shadow-premium md:w-auto">
               <div className="flex flex-col gap-4">
+                <div className="grid gap-2">
+                  <div className="text-xs font-medium text-muted-foreground">Search</div>
+                  <div className="flex items-center gap-2 rounded-md border bg-card px-3">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search deals (e.g. earbuds, polo…)"
+                      className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      aria-label="Search deals"
+                    />
+                  </div>
+                </div>
+
                 <div className="hidden md:block">
                   <div className="text-xs font-medium text-muted-foreground">Category</div>
                   <div className="mt-2 overflow-x-auto">
@@ -80,7 +104,17 @@ export default function Deals() {
                     >
                       {CATEGORIES.map((c) => (
                         <ToggleGroupItem key={c} value={c} variant="outline" size="sm" className="shrink-0">
-                          {c}
+                          {c === "All" ? (
+                            "All"
+                          ) : (
+                            <span className="inline-flex items-center gap-2">
+                              {(() => {
+                                const Icon = DEAL_CATEGORY_META[c].Icon;
+                                return <Icon className="h-4 w-4" />;
+                              })()}
+                              {c}
+                            </span>
+                          )}
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
@@ -140,6 +174,7 @@ export default function Deals() {
                       onClick={() => {
                         setCategory("All");
                         setSort("endingSoon");
+                        setQuery("");
                       }}
                     >
                       Reset
@@ -175,6 +210,7 @@ export default function Deals() {
                   onClick={() => {
                     setCategory("All");
                     setSort("endingSoon");
+                    setQuery("");
                   }}
                 >
                   Reset
@@ -202,9 +238,12 @@ export default function Deals() {
         {!loading && filtered.length === 0 ? (
           <div className="mt-10 rounded-2xl border bg-card p-8 text-center shadow-premium">
             <div className="text-lg font-semibold">No deals match your filters</div>
-            <p className="mt-2 text-sm text-muted-foreground">Try switching category or sorting by Ending soon.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Try a different keyword, switch category, or sort by Ending soon.
+            </p>
             <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
               <Button variant="outline" onClick={() => setCategory("All")}>Reset category</Button>
+              <Button variant="outline" onClick={() => setQuery("")}>Clear search</Button>
               <Button variant="outline" onClick={() => setSort("endingSoon")}>Sort ending soon</Button>
             </div>
           </div>

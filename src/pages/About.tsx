@@ -18,6 +18,14 @@ export default function About() {
   const defaultMsg = settings.data?.whatsapp_default_message ?? SOLD_BD.whatsapp.defaultMessage;
   const whatsappHref = whatsappOrderLink(phone, defaultMsg);
 
+  const contactTrust = ((settings.data?.content as any)?.contact_trust as
+    | {
+        supportHours?: string;
+        location?: string;
+        returns?: string;
+      }
+    | undefined) ?? {};
+
   return (
     <div className="bg-background">
       <section className="relative overflow-hidden bg-hero-gradient">
@@ -62,19 +70,21 @@ export default function About() {
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <Clock className="h-4 w-4 text-primary" /> Support hours
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">10:00 AM – 10:00 PM (BDT)</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{contactTrust.supportHours ?? "10:00 AM – 10:00 PM (BDT)"}</div>
                 </div>
                 <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <MapPin className="h-4 w-4 text-primary" /> Location
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">Dhaka, Bangladesh</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{contactTrust.location ?? "Dhaka, Bangladesh"}</div>
                 </div>
                 <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <ShieldCheck className="h-4 w-4 text-primary" /> Policies
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">Returns/refunds handled by the seller. We help connect you fast.</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {contactTrust.returns ?? "Returns/refunds handled by the seller. We help connect you fast."}
+                  </div>
                 </div>
               </div>
             </CardContent>
