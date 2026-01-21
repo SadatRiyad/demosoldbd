@@ -2,7 +2,7 @@ import * as React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -71,7 +71,7 @@ export default function ExternalStoragePanel() {
   async function load() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-storage-settings", { method: "GET" });
+      const { data, error } = await apiInvoke("admin-storage-settings", { method: "GET" });
       if (error) throw error;
       const p = String((data as any)?.provider ?? "s3");
       const s = ((data as any)?.settings ?? {}) as Record<string, any>;
@@ -118,7 +118,7 @@ export default function ExternalStoragePanel() {
         settings.publicBaseUrl = values.publicBaseUrl;
       }
 
-      const { data, error } = await supabase.functions.invoke("admin-storage-settings", {
+      const { data, error } = await apiInvoke("admin-storage-settings", {
         method: "PUT",
         body: { provider: values.provider, settings },
       });
@@ -142,7 +142,7 @@ export default function ExternalStoragePanel() {
       const fd = new FormData();
       fd.set("file", file);
       fd.set("purpose", "admin-test");
-      const { data, error } = await supabase.functions.invoke("admin-upload", { method: "POST", body: fd });
+      const { data, error } = await apiInvoke("admin-upload", { method: "POST", body: fd });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Upload failed");
       const url = String((data as any)?.url ?? "");

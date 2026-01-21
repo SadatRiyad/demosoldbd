@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export default function BootstrapAdmin() {
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("bootstrap-admin", { body: { token: values.token } });
+      const { data, error } = await apiInvoke("bootstrap-admin", { body: { token: values.token } });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Bootstrap failed");
       toast({ title: "Admin granted", description: "You can now open the admin dashboard." });

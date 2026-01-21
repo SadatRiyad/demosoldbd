@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 
 const schema = z.object({
@@ -51,7 +51,7 @@ export default function ContactTrustSettings() {
   async function onSave(values: FormValues) {
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-site-settings", {
+      const { data, error } = await apiInvoke("admin-site-settings", {
         method: "PATCH",
         body: { content_patch: { contact_trust: values } },
       });

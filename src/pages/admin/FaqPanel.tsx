@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
@@ -62,7 +62,7 @@ export default function FaqPanel() {
   async function onSave(values: FormValues) {
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-site-settings", {
+      const { data, error } = await apiInvoke("admin-site-settings", {
         method: "PATCH",
         body: { content_patch: { faq: values.items } },
       });
