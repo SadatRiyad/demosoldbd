@@ -146,7 +146,7 @@ export default function Contact() {
           </Card>
         </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-6 md:mt-12 md:grid-cols-3">
           <Card className="shadow-premium">
             <CardContent className="p-6">
               <div className="text-sm font-semibold">Returns & refunds</div>

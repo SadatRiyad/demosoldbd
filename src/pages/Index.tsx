@@ -71,7 +71,7 @@ export default function Index() {
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="animate-fade-in">
               <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">{headerKicker}</Badge>
-              <h1 className="mt-5 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
+              <h1 className="mt-5 break-words text-balance font-display text-3xl font-extrabold tracking-tight sm:text-4xl md:text-6xl">
                 {heroH1}
               </h1>
               <p className="mt-4 max-w-xl text-lg text-muted-foreground md:text-xl">
