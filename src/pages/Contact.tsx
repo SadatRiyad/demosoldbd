@@ -37,9 +37,12 @@ export default function Contact() {
     }
 
     try {
-      const { error } = await supabase.from("early_access_signups").insert({ email: parsed.data });
-      // ignore duplicates (unique constraint)
-      if (error && !String(error.message).toLowerCase().includes("duplicate")) throw error;
+      const { data, error } = await supabase.functions.invoke("early-access", {
+        method: "POST",
+        body: { email: parsed.data },
+      });
+      if (error) throw error;
+      if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Couldn’t save");
       setSaved(true);
     } catch (err) {
       toast({ title: "Couldn’t save", description: (err as Error).message, variant: "destructive" });

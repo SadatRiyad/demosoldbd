@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/useSiteSettings";
-import { uploadPublicFile } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +26,7 @@ export default function SiteSettingsPanel() {
   const { toast } = useToast();
   const settings = useSiteSettings();
   const [saving, setSaving] = React.useState(false);
-  const [logoUploading, setLogoUploading] = React.useState(false);
+  const [savingLogo, setSavingLogo] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -58,13 +57,12 @@ export default function SiteSettingsPanel() {
   }, [settings.data, form]);
 
   async function onSubmit(values: FormValues) {
-    if (!settings.data?.id) return;
     setSaving(true);
     try {
       const nextDropAt = values.nextDropAt ? new Date(values.nextDropAt).toISOString() : null;
-      const { error } = await supabase
-        .from("site_settings")
-        .update({
+      const { data, error } = await supabase.functions.invoke("admin-site-settings", {
+        method: "PUT",
+        body: {
           brand_name: values.brandName,
           brand_tagline: values.brandTagline,
           header_kicker: values.headerKicker,
@@ -73,9 +71,10 @@ export default function SiteSettingsPanel() {
           whatsapp_phone_e164: values.whatsappPhoneE164,
           whatsapp_default_message: values.whatsappDefaultMessage,
           next_drop_at: nextDropAt,
-        })
-        .eq("id", settings.data.id);
+        },
+      });
       if (error) throw error;
+      if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Save failed");
       toast({ title: "Saved", description: "Site settings updated." });
       await settings.refetch();
     } catch (e) {
@@ -85,29 +84,25 @@ export default function SiteSettingsPanel() {
     }
   }
 
-  async function onUploadLogo(file: File) {
-    if (!settings.data?.id) return;
-    setLogoUploading(true);
+  const logoUrl = (settings.data?.content as any)?.logoUrl as string | undefined;
+
+  async function onSaveLogoUrl(url: string) {
+    setSavingLogo(true);
     try {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `logo/${Date.now()}_${safeName}`;
-      const url = await uploadPublicFile({ bucket: "brand", path, file });
-
-      const current = settings.data.content ?? {};
-      const merged = { ...current, logoUrl: url };
-      const { error } = await supabase.from("site_settings").update({ content: merged }).eq("id", settings.data.id);
+      const { data, error } = await supabase.functions.invoke("admin-site-settings", {
+        method: "PATCH",
+        body: { content_patch: { logoUrl: url.trim() || null } },
+      });
       if (error) throw error;
-
-      toast({ title: "Uploaded", description: "Logo updated." });
+      if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Save failed");
+      toast({ title: "Saved", description: "Logo URL updated." });
       await settings.refetch();
     } catch (e) {
-      toast({ title: "Upload failed", description: (e as Error).message, variant: "destructive" });
+      toast({ title: "Save failed", description: (e as Error).message, variant: "destructive" });
     } finally {
-      setLogoUploading(false);
+      setSavingLogo(false);
     }
   }
-
-  const logoUrl = (settings.data?.content as any)?.logoUrl as string | undefined;
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -118,22 +113,23 @@ export default function SiteSettingsPanel() {
             <div className="h-12 w-12 overflow-hidden rounded-xl border bg-card">
               {logoUrl ? <img className="h-full w-full object-cover" src={logoUrl} alt="Brand logo" /> : null}
             </div>
-            <label className="inline-flex">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void onUploadLogo(f);
-                }}
-              />
-              <Button type="button" variant="outline" disabled={logoUploading}>
-                {logoUploading ? "Uploading…" : "Upload"}
-              </Button>
-            </label>
+            <div className="flex-1" />
           </div>
-          <div className="text-xs text-muted-foreground">Stored in secure file storage; only the URL is saved.</div>
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-muted-foreground">Logo URL</div>
+            <Input
+              defaultValue={logoUrl ?? ""}
+              placeholder="https://…"
+              onBlur={(e) => void onSaveLogoUrl(e.target.value)}
+              aria-label="Logo URL"
+            />
+            <div className="text-xs text-muted-foreground">
+              MySQL-only mode: paste a hosted image URL. (Uploads can be enabled later with an external storage provider.)
+            </div>
+            <Button type="button" variant="outline" disabled={savingLogo} onClick={() => void onSaveLogoUrl(logoUrl ?? "")}>
+              {savingLogo ? "Saving…" : "Save logo URL"}
+            </Button>
+          </div>
         </div>
       </div>
 

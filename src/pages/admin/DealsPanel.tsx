@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { uploadPublicFile } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIES = ["Electronics", "Fashion", "Food", "Home", "Beauty"] as const;
@@ -40,8 +39,8 @@ export default function DealsPanel() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-  const [imageUploading, setImageUploading] = React.useState(false);
   const [items, setItems] = React.useState<AdminDeal[]>([]);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -74,19 +73,30 @@ export default function DealsPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onUploadImage(file: File) {
-    setImageUploading(true);
-    try {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `deal-images/${Date.now()}_${safeName}`;
-      const url = await uploadPublicFile({ bucket: "deals", path, file });
-      form.setValue("imageUrl", url, { shouldValidate: true });
-      toast({ title: "Uploaded", description: "Image uploaded." });
-    } catch (e) {
-      toast({ title: "Upload failed", description: (e as Error).message, variant: "destructive" });
-    } finally {
-      setImageUploading(false);
-    }
+  function startEdit(d: AdminDeal) {
+    setEditingId(d.id);
+    form.reset({
+      title: d.title,
+      description: d.description,
+      category: d.category,
+      priceBdt: d.priceBdt,
+      stock: d.stock,
+      endsAt: d.endsAt,
+      imageUrl: d.imageUrl,
+    });
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    form.reset({
+      title: "",
+      description: "",
+      category: "Electronics",
+      priceBdt: undefined,
+      stock: 1,
+      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+      imageUrl: "",
+    });
   }
 
   async function onCreate(values: FormValues) {
@@ -106,12 +116,53 @@ export default function DealsPanel() {
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Create failed");
       toast({ title: "Created", description: "Deal created." });
-      form.reset();
+      resetForm();
       await refresh();
     } catch (e) {
       toast({ title: "Create failed", description: (e as Error).message, variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onUpdate(values: FormValues) {
+    if (!editingId) return;
+    setSaving(true);
+    try {
+      const payload = {
+        id: editingId,
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        price_bdt: typeof values.priceBdt === "number" ? values.priceBdt : null,
+        image_url: values.imageUrl ?? "",
+        stock: values.stock,
+        ends_at: new Date(values.endsAt).toISOString(),
+      };
+      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "PUT", body: payload });
+      if (error) throw error;
+      if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Update failed");
+      toast({ title: "Updated", description: "Deal updated." });
+      resetForm();
+      await refresh();
+    } catch (e) {
+      toast({ title: "Update failed", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onDelete(id: string) {
+    if (!confirm("Delete this deal?")) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "DELETE", body: { id } });
+      if (error) throw error;
+      if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Delete failed");
+      toast({ title: "Deleted", description: "Deal removed." });
+      if (editingId === id) resetForm();
+      await refresh();
+    } catch (e) {
+      toast({ title: "Delete failed", description: (e as Error).message, variant: "destructive" });
     }
   }
 
@@ -129,8 +180,16 @@ export default function DealsPanel() {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-4">
-        <div className="text-sm font-semibold">Create deal</div>
-        <form onSubmit={form.handleSubmit(onCreate)} className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold">{editingId ? "Edit deal" : "Create deal"}</div>
+          {editingId ? (
+            <Button type="button" variant="outline" onClick={() => resetForm()}>
+              Cancel
+            </Button>
+          ) : null}
+        </div>
+
+        <form onSubmit={form.handleSubmit(editingId ? onUpdate : onCreate)} className="space-y-4">
           <div className="grid gap-2">
             <div className="text-sm font-medium">Title</div>
             <Input {...form.register("title")} />
@@ -172,24 +231,11 @@ export default function DealsPanel() {
           <div className="grid gap-2">
             <div className="text-sm font-medium">Image URL</div>
             <Input placeholder="https://…" {...form.register("imageUrl")} />
-            <label className="inline-flex">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void onUploadImage(f);
-                }}
-              />
-              <Button type="button" variant="outline" disabled={imageUploading}>
-                {imageUploading ? "Uploading…" : "Upload image"}
-              </Button>
-            </label>
+            <div className="text-xs text-muted-foreground">MySQL-only mode: paste a hosted image URL.</div>
           </div>
 
           <Button className="w-full" type="submit" disabled={saving}>
-            {saving ? "Creating…" : "Create deal"}
+            {saving ? (editingId ? "Saving…" : "Creating…") : editingId ? "Save changes" : "Create deal"}
           </Button>
         </form>
       </div>
@@ -211,9 +257,20 @@ export default function DealsPanel() {
                     {d.category} • Stock {d.stock} • Ends {new Date(d.endsAt).toLocaleString()}
                   </div>
                 </div>
-                <Button variant={d.isActive === false ? "outline" : "secondary"} onClick={() => onToggleActive(d.id, d.isActive === false)}>
-                  {d.isActive === false ? "Activate" : "Deactivate"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => startEdit(d)}>
+                    Edit
+                  </Button>
+                  <Button
+                    variant={d.isActive === false ? "outline" : "secondary"}
+                    onClick={() => onToggleActive(d.id, d.isActive === false)}
+                  >
+                    {d.isActive === false ? "Activate" : "Deactivate"}
+                  </Button>
+                  <Button variant="destructive" onClick={() => onDelete(d.id)}>
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
