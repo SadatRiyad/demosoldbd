@@ -6,6 +6,7 @@ import { usePageMeta } from "@/lib/usePageMeta";
 import SiteSettingsPanel from "@/pages/admin/SiteSettingsPanel";
 import DealsPanel from "@/pages/admin/DealsPanel";
 import EarlyAccessPanel from "@/pages/admin/EarlyAccessPanel";
+import ExternalStoragePanel from "@/pages/admin/ExternalStoragePanel";
 
 export default function AdminDashboard() {
   usePageMeta({ title: "Admin | sold.bd", description: "Admin dashboard for sold.bd." });
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
               <TabsList>
                 <TabsTrigger value="site">Site</TabsTrigger>
                 <TabsTrigger value="deals">Deals</TabsTrigger>
+                <TabsTrigger value="storage">Storage</TabsTrigger>
                 <TabsTrigger value="signups">Early Access</TabsTrigger>
               </TabsList>
               <TabsContent value="site" className="mt-6">
@@ -40,6 +42,9 @@ export default function AdminDashboard() {
               </TabsContent>
               <TabsContent value="deals" className="mt-6">
                 <DealsPanel />
+              </TabsContent>
+              <TabsContent value="storage" className="mt-6">
+                <ExternalStoragePanel />
               </TabsContent>
               <TabsContent value="signups" className="mt-6">
                 <EarlyAccessPanel />
