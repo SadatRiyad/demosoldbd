@@ -31,17 +31,20 @@ export default function Signup() {
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
-        options: { emailRedirectTo: window.location.origin },
+        // MySQL-only data mode: do not write to backend tables (profiles/site_settings/etc).
+        // Store display name in auth user metadata instead.
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { display_name: values.displayName },
+        },
       });
       if (error) throw error;
 
-      const userId = data.user?.id;
-      if (userId) {
-        await supabase.from("profiles").insert({ user_id: userId, display_name: values.displayName, avatar_url: null });
-      }
+      // Note: we intentionally do NOT insert into public.profiles.
+      // Roles remain in user_roles for secure admin gating.
 
       toast({ title: "Account created", description: "You can now log in." });
       navigate("/login", { replace: true });
