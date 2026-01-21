@@ -1,4 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DEFAULT_FAQ = [
   {
@@ -19,7 +20,15 @@ const DEFAULT_FAQ = [
   },
 ];
 
-export default function FaqSection({ items = DEFAULT_FAQ }: { items?: Array<{ q: string; a: string }> }) {
+export default function FaqSection({
+  items,
+  loading,
+}: {
+  items?: Array<{ q: string; a: string }>;
+  loading?: boolean;
+}) {
+  const safeItems = items && items.length > 0 ? items : DEFAULT_FAQ;
+
   return (
     <section className="container py-14 md:py-18" aria-labelledby="faq-title">
       <header className="max-w-2xl">
@@ -31,12 +40,20 @@ export default function FaqSection({ items = DEFAULT_FAQ }: { items?: Array<{ q:
 
       <div className="mt-8 rounded-2xl border bg-card p-2 shadow-premium">
         <Accordion type="single" collapsible className="w-full">
-          {items.map((it) => (
-            <AccordionItem key={it.q} value={it.q}>
-              <AccordionTrigger className="px-4">{it.q}</AccordionTrigger>
-              <AccordionContent className="px-4 text-muted-foreground">{it.a}</AccordionContent>
-            </AccordionItem>
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="px-4 py-4">
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ))
+          ) : (
+            safeItems.map((it, idx) => (
+              <AccordionItem key={`${it.q}-${idx}`} value={`${idx}`}>
+                <AccordionTrigger className="px-4">{it.q}</AccordionTrigger>
+                <AccordionContent className="px-4 text-muted-foreground">{it.a}</AccordionContent>
+              </AccordionItem>
+            ))
+          )}
         </Accordion>
       </div>
     </section>

@@ -14,10 +14,16 @@ function pad(n: number) {
 function EndingIn({ endsAt }: { endsAt: string }) {
   const c = useCountdown(endsAt);
   if (c.isComplete) return <span className="text-xs text-muted-foreground">Ended</span>;
+  const secondsLeft = c.days * 86400 + c.hours * 3600 + c.minutes * 60 + c.seconds;
   const label = c.days > 0 ? `${c.days}d ${pad(c.hours)}:${pad(c.minutes)}` : `${pad(c.hours)}:${pad(c.minutes)}:${pad(c.seconds)}`;
   return (
     <span className="text-[11px] text-muted-foreground" aria-label={`Ending in ${label}`}>
       Ending in <span className="font-medium text-foreground">{label}</span>
+      {secondsLeft > 0 && secondsLeft <= 600 ? (
+        <Badge variant="secondary" className="ml-2 px-2 py-0 text-[10px] font-semibold">
+          Ends soon
+        </Badge>
+      ) : null}
     </span>
   );
 }
