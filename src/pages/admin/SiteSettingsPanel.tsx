@@ -2,7 +2,7 @@ import * as React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,7 +106,7 @@ export default function SiteSettingsPanel() {
     setSaving(true);
     try {
       const nextDropAt = values.nextDropAt ? new Date(values.nextDropAt).toISOString() : null;
-      const { data, error } = await supabase.functions.invoke("admin-site-settings", {
+      const { data, error } = await apiInvoke("admin-site-settings", {
         method: "PUT",
         body: {
           brand_name: values.brandName,
@@ -123,7 +123,7 @@ export default function SiteSettingsPanel() {
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Save failed");
 
       // Mobile hero settings live in content JSON.
-      const { data: data2, error: error2 } = await supabase.functions.invoke("admin-site-settings", {
+      const { data: data2, error: error2 } = await apiInvoke("admin-site-settings", {
         method: "PATCH",
         body: {
           content_patch: {
@@ -151,7 +151,7 @@ export default function SiteSettingsPanel() {
   async function onSaveLogoUrl(url: string) {
     setSavingLogo(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-site-settings", {
+      const { data, error } = await apiInvoke("admin-site-settings", {
         method: "PATCH",
         body: { content_patch: { logoUrl: url.trim() || null } },
       });

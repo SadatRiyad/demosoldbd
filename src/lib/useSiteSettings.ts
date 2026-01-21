@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 
 export type SiteSettings = {
   id: string;
@@ -18,7 +18,7 @@ export function useSiteSettings() {
   return useQuery({
     queryKey: ["site-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke<{ settings: SiteSettings | null }>("site-settings", { method: "GET" });
+      const { data, error } = await apiInvoke<{ settings: SiteSettings | null }>("site-settings", { method: "GET" });
       if (error) throw error;
       return data?.settings ?? null;
     },

@@ -2,7 +2,7 @@ import * as React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,7 +84,8 @@ export default function DealsPanel() {
   async function refresh() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "GET" });
+      const { data, error } = await apiInvoke("admin-deals", { method: "GET" });
+      
       if (error) throw error;
       setItems(((data as any)?.deals ?? []) as AdminDeal[]);
     } catch (e) {
@@ -139,7 +140,7 @@ export default function DealsPanel() {
         ends_at: toIsoFromLocalDateTimeValue(values.endsAtLocal),
         is_active: 1,
       };
-      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "POST", body: payload });
+      const { data, error } = await apiInvoke("admin-deals", { method: "POST", body: payload });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Create failed");
       toast({ title: "Created", description: "Deal created." });
@@ -167,7 +168,7 @@ export default function DealsPanel() {
         stock: values.stock,
         ends_at: toIsoFromLocalDateTimeValue(values.endsAtLocal),
       };
-      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "PUT", body: payload });
+      const { data, error } = await apiInvoke("admin-deals", { method: "PUT", body: payload });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Update failed");
       toast({ title: "Updated", description: "Deal updated." });
@@ -183,7 +184,7 @@ export default function DealsPanel() {
   async function onDelete(id: string) {
     if (!confirm("Delete this deal?")) return;
     try {
-      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "DELETE", body: { id } });
+      const { data, error } = await apiInvoke("admin-deals", { method: "DELETE", body: { id } });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Delete failed");
       toast({ title: "Deleted", description: "Deal removed." });
@@ -196,7 +197,7 @@ export default function DealsPanel() {
 
   async function onToggleActive(id: string, active: boolean) {
     try {
-      const { data, error } = await supabase.functions.invoke("admin-deals", { method: "PATCH", body: { id, is_active: active ? 1 : 0 } });
+      const { data, error } = await apiInvoke("admin-deals", { method: "PATCH", body: { id, is_active: active ? 1 : 0 } });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Update failed");
       await refresh();

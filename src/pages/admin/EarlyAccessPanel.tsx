@@ -1,5 +1,5 @@
 import * as React from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,7 +13,7 @@ export default function EarlyAccessPanel() {
   async function load() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-early-access", { method: "GET" });
+      const { data, error } = await apiInvoke("admin-early-access", { method: "GET" });
       if (error) throw error;
       setItems(((data as any)?.signups ?? []) as SignupRow[]);
     } catch (e) {

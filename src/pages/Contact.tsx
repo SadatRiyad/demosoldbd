@@ -8,7 +8,7 @@ import { SOLD_BD } from "@/config/soldbd";
 import { whatsappOrderLink } from "@/lib/whatsapp";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { useSiteSettings } from "@/lib/useSiteSettings";
-import { supabase } from "@/integrations/supabase/client";
+import { apiInvoke } from "@/lib/api/client";
 import { useToast } from "@/hooks/use-toast";
 import { Clock, MapPin, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -50,7 +50,7 @@ export default function Contact() {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("early-access", {
+      const { data, error } = await apiInvoke("early-access", {
         method: "POST",
         body: { email: parsed.data },
       });
