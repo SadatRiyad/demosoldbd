@@ -18,7 +18,7 @@ export function useSiteSettings() {
   return useQuery({
     queryKey: ["site-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke<{ settings: SiteSettings | null }>("site-settings");
+      const { data, error } = await supabase.functions.invoke<{ settings: SiteSettings | null }>("site-settings", { method: "GET" });
       if (error) throw error;
       return data?.settings ?? null;
     },

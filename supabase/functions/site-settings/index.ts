@@ -11,6 +11,13 @@ function requireEnv(name: string) {
   return v;
 }
 
+function requirePort(name: string) {
+  const raw = requireEnv(name).trim();
+  const port = Number.parseInt(raw, 10);
+  if (!Number.isFinite(port)) throw new Error(`Invalid port for ${name}: ${raw}`);
+  return port;
+}
+
 function sslConfigFromMode(v: string | undefined) {
   const mode = (v ?? "PREFERRED").toUpperCase();
   if (mode === "DISABLED") return undefined;
@@ -34,7 +41,7 @@ async function getMysqlClient() {
   const { Client } = await import("https://deno.land/x/mysql@v2.12.1/mod.ts");
 
   const host = requireEnv("HOSTINGER_MYSQL_HOST");
-  const port = Number(requireEnv("HOSTINGER_MYSQL_PORT"));
+  const port = requirePort("HOSTINGER_MYSQL_PORT");
   const user = requireEnv("HOSTINGER_MYSQL_USER");
   const password = requireEnv("HOSTINGER_MYSQL_PASSWORD");
   const db = requireEnv("HOSTINGER_MYSQL_DATABASE");
@@ -81,7 +88,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    if (req.method !== "GET") {
+    // supabase.functions.invoke() defaults to POST unless a method is provided.
+    // Support both GET and POST for public reads.
+    if (!(req.method === "GET" || req.method === "POST")) {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
         headers: { ...corsHeaders, "content-type": "application/json" },
