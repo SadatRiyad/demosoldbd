@@ -27,6 +27,16 @@ export default function Contact() {
   const { toast } = useToast();
   const settings = useSiteSettings();
 
+  const contactTrust = ((settings.data?.content as any)?.contact_trust as
+    | {
+        supportHours?: string;
+        location?: string;
+        returns?: string;
+        shipping?: string;
+        privacy?: string;
+      }
+    | undefined) ?? {};
+
   const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
   const defaultMsg = settings.data?.whatsapp_default_message ?? SOLD_BD.whatsapp.defaultMessage;
   const whatsappHref = whatsappOrderLink(phone, defaultMsg);
@@ -91,13 +101,13 @@ export default function Contact() {
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <Clock className="h-4 w-4 text-primary" /> Support hours
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">10:00 AM – 10:00 PM (BDT)</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{contactTrust.supportHours ?? "10:00 AM – 10:00 PM (BDT)"}</div>
                 </div>
                 <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <MapPin className="h-4 w-4 text-primary" /> Location
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">Dhaka, Bangladesh</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{contactTrust.location ?? "Dhaka, Bangladesh"}</div>
                 </div>
                 <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
@@ -140,19 +150,23 @@ export default function Contact() {
           <Card className="shadow-premium">
             <CardContent className="p-6">
               <div className="text-sm font-semibold">Returns & refunds</div>
-              <p className="mt-2 text-sm text-muted-foreground">Handled by the seller. We’ll help connect you quickly on WhatsApp.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {contactTrust.returns ?? "Handled by the seller. We’ll help connect you quickly on WhatsApp."}
+              </p>
             </CardContent>
           </Card>
           <Card className="shadow-premium">
             <CardContent className="p-6">
               <div className="text-sm font-semibold">Shipping</div>
-              <p className="mt-2 text-sm text-muted-foreground">Delivery time and cost depend on the seller and your location.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {contactTrust.shipping ?? "Delivery time and cost depend on the seller and your location."}
+              </p>
             </CardContent>
           </Card>
           <Card className="shadow-premium">
             <CardContent className="p-6">
               <div className="text-sm font-semibold">Privacy</div>
-              <p className="mt-2 text-sm text-muted-foreground">We store your email for early access alerts only.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{contactTrust.privacy ?? "We store your email for early access alerts only."}</p>
             </CardContent>
           </Card>
         </div>

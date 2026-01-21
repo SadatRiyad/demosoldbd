@@ -5,6 +5,7 @@ import CountdownPill from "@/components/deals/CountdownPill";
 import { FlashDeal, SOLD_BD } from "@/config/soldbd";
 import { whatsappOrderLink } from "@/lib/whatsapp";
 import { useSiteSettings } from "@/lib/useSiteSettings";
+import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
 
 export default function DealCard({ deal }: { deal: FlashDeal }) {
   const settings = useSiteSettings();
@@ -26,7 +27,13 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
           className="h-44 w-full object-cover"
         />
         <div className="absolute left-3 top-3 flex gap-2">
-          <Badge variant="secondary">{deal.category}</Badge>
+          <Badge variant="secondary" className="inline-flex items-center gap-1.5">
+            {(() => {
+              const Icon = DEAL_CATEGORY_META[deal.category].Icon;
+              return <Icon className="h-3.5 w-3.5" />;
+            })()}
+            {deal.category}
+          </Badge>
           {soldOut ? <Badge variant="destructive">Sold Out</Badge> : <Badge variant="secondary">Stock: {deal.stock}</Badge>}
         </div>
         <div className="absolute bottom-3 left-3">

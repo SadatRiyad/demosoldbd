@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import ContactTrustSettings from "@/pages/admin/ContactTrustSettings";
 
 const schema = z.object({
   brandName: z.string().trim().min(2).max(60),
@@ -131,6 +132,8 @@ export default function SiteSettingsPanel() {
             </Button>
           </div>
         </div>
+
+        <ContactTrustSettings />
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
