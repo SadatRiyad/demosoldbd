@@ -199,7 +199,7 @@ export default function Index() {
         </div>
       </section>
 
-      <FaqSection items={faqItems} />
+      <FaqSection items={faqItems} loading={settings.isLoading} />
       <AboutTeaserSection />
     </div>
   );
