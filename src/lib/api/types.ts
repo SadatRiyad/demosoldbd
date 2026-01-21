@@ -9,6 +9,7 @@
 export type ApiFunctionName =
   | "deals"
   | "site-settings"
+  | "health"
   | "early-access"
   | "bootstrap-admin"
   | "admin-mysql-status"
@@ -56,6 +57,8 @@ export type SiteSettings = {
 export type Deals_Get_Response = Deal[];
 
 export type SiteSettings_Get_Response = SiteSettings;
+
+export type Health_Get_Response = { ok: true; backend: "lovable" | "node"; ts: string };
 
 export type EarlyAccess_Post_Body = { email: string };
 export type EarlyAccess_Post_Response = { ok: true } | { ok: false; error: string };
@@ -128,6 +131,9 @@ export type ApiRoutes = {
   };
   "site-settings": {
     GET: { body: undefined; response: SiteSettings_Get_Response };
+  };
+  health: {
+    GET: { body: undefined; response: Health_Get_Response };
   };
   "early-access": {
     POST: { body: EarlyAccess_Post_Body; response: EarlyAccess_Post_Response };
