@@ -1,13 +1,22 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Timer, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SOLD_BD } from "@/config/soldbd";
+import { useSiteSettings } from "@/lib/useSiteSettings";
+import { whatsappOrderLink } from "@/lib/whatsapp";
+import { Clock, MapPin, MessageCircle, ShieldCheck, Timer } from "lucide-react";
 
 export default function About() {
   usePageMeta({
     title: "About | sold.bd",
     description: "Learn how sold.bd works and why we’re building Bangladesh’s most trusted flash-deals marketplace.",
   });
+
+  const settings = useSiteSettings();
+  const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
+  const defaultMsg = settings.data?.whatsapp_default_message ?? SOLD_BD.whatsapp.defaultMessage;
+  const whatsappHref = whatsappOrderLink(phone, defaultMsg);
 
   return (
     <div className="bg-background">
@@ -24,6 +33,54 @@ export default function About() {
       </section>
 
       <section className="container py-12 md:py-16">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="shadow-premium lg:col-span-2">
+            <CardContent className="p-8">
+              <h2 className="font-display text-xl font-extrabold tracking-tight md:text-2xl">Order in seconds</h2>
+              <p className="mt-2 text-sm text-muted-foreground md:text-base">
+                No slow checkout in V1. Deals are WhatsApp-first so buyers can confirm availability, delivery time, and payment options fast.
+              </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="lg" className="sm:w-auto">
+                  <a href={whatsappHref} target="_blank" rel="noreferrer">
+                    Chat on WhatsApp
+                  </a>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="sm:w-auto">
+                  <a href="/deals">Browse deals</a>
+                </Button>
+              </div>
+              <div className="mt-6 text-xs text-muted-foreground">WhatsApp: {phone}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-premium">
+            <CardContent className="p-8">
+              <div className="text-sm font-semibold">Trust basics</div>
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Clock className="h-4 w-4 text-primary" /> Support hours
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">10:00 AM – 10:00 PM (BDT)</div>
+                </div>
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <MapPin className="h-4 w-4 text-primary" /> Location
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">Dhaka, Bangladesh</div>
+                </div>
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <ShieldCheck className="h-4 w-4 text-primary" /> Policies
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">Returns/refunds handled by the seller. We help connect you fast.</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="shadow-premium">
             <CardContent className="p-6">
