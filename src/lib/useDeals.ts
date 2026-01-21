@@ -8,7 +8,7 @@ export function useDeals() {
   return useQuery({
     queryKey: ["deals"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke<DealsResponse>("deals");
+      const { data, error } = await supabase.functions.invoke<DealsResponse>("deals", { method: "GET" });
       if (error) throw error;
       return data?.deals ?? [];
     },

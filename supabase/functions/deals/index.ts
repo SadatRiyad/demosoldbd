@@ -26,6 +26,13 @@ function requireEnv(name: string) {
   return v;
 }
 
+function requirePort(name: string) {
+  const raw = requireEnv(name).trim();
+  const port = Number.parseInt(raw, 10);
+  if (!Number.isFinite(port)) throw new Error(`Invalid port for ${name}: ${raw}`);
+  return port;
+}
+
 function sslConfigFromMode(v: string | undefined) {
   // Supported input examples: "DISABLED", "PREFERRED", "REQUIRED"
   const mode = (v ?? "PREFERRED").toUpperCase();
@@ -42,7 +49,7 @@ Deno.serve(async (req) => {
     const { Client } = await import("https://deno.land/x/mysql@v2.12.1/mod.ts");
 
     const host = requireEnv("HOSTINGER_MYSQL_HOST");
-    const port = Number(requireEnv("HOSTINGER_MYSQL_PORT"));
+    const port = requirePort("HOSTINGER_MYSQL_PORT");
     const user = requireEnv("HOSTINGER_MYSQL_USER");
     const password = requireEnv("HOSTINGER_MYSQL_PASSWORD");
     const db = requireEnv("HOSTINGER_MYSQL_DATABASE");
