@@ -12,21 +12,30 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
   const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
 
   const soldOut = deal.stock <= 0;
+  const isExpired = new Date(deal.endsAt).getTime() <= Date.now();
+  const isLive = !soldOut && !isExpired;
   const whatsappHref = whatsappOrderLink(
     phone,
     `Hi sold.bd! I want to buy: ${deal.title}${deal.priceBdt ? ` (৳${deal.priceBdt})` : ""}. Is it still available?`,
   );
 
   return (
-    <Card className="overflow-hidden shadow-premium">
+    <Card className={"overflow-hidden shadow-premium" + (isExpired ? " opacity-80" : "")}
+      aria-label={isExpired ? "Deal ended" : isLive ? "Deal live" : soldOut ? "Deal sold out" : "Deal"}
+    >
       <div className="relative">
         <img
           src={deal.imageUrl}
           alt={`${deal.title} product image`}
           loading="lazy"
-          className="h-44 w-full object-cover"
+          className={"h-44 w-full object-cover" + (isExpired ? " grayscale" : "")}
         />
         <div className="absolute left-3 top-3 flex gap-2">
+          {isLive ? (
+            <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">LIVE</Badge>
+          ) : isExpired ? (
+            <Badge variant="secondary">SOLD</Badge>
+          ) : null}
           <Badge variant="secondary" className="inline-flex items-center gap-1.5">
             {(() => {
               const Icon = DEAL_CATEGORY_META[deal.category].Icon;
@@ -55,9 +64,9 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
       </CardContent>
 
       <CardFooter className="pt-0">
-        <Button asChild className="w-full" disabled={soldOut} aria-disabled={soldOut}>
+        <Button asChild className="w-full" disabled={soldOut || isExpired} aria-disabled={soldOut || isExpired}>
           <a href={whatsappHref} target="_blank" rel="noreferrer">
-            {soldOut ? "Sold Out" : "Buy on WhatsApp"}
+            {isExpired ? "Deal ended" : soldOut ? "Sold Out" : "Buy on WhatsApp"}
           </a>
         </Button>
       </CardFooter>

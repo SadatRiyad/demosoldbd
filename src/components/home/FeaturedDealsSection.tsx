@@ -29,6 +29,8 @@ function EndingIn({ endsAt }: { endsAt: string }) {
 }
 
 function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
+  const isExpired = new Date(deal.endsAt).getTime() <= Date.now();
+  const isLive = deal.stock > 0 && !isExpired;
   return (
     <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3">
       <img
@@ -40,6 +42,13 @@ function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold">{deal.title}</div>
         <div className="mt-0.5 flex items-center gap-2">
+          {isLive ? (
+            <Badge className="bg-brand text-brand-foreground hover:bg-brand/90 px-2 py-0 text-[10px] font-semibold">LIVE</Badge>
+          ) : isExpired ? (
+            <Badge variant="secondary" className="px-2 py-0 text-[10px] font-semibold">
+              SOLD
+            </Badge>
+          ) : null}
           <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             {(() => {
               const Icon = DEAL_CATEGORY_META[deal.category].Icon;
