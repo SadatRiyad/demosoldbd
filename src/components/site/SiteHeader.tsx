@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useIsAdmin } from "@/lib/useIsAdmin";
 import { Menu } from "lucide-react";
 import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 const NavItems = ({ onNavigate }: { onNavigate?: () => void }) => (
   <nav className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
@@ -71,7 +72,7 @@ const NavItems = ({ onNavigate }: { onNavigate?: () => void }) => (
 
 export default function SiteHeader() {
   const settings = useSiteSettings();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const isAdmin = useIsAdmin();
 
   const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
@@ -108,6 +109,8 @@ export default function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle className="hidden sm:inline-flex" />
+
           {user ? (
             <Button asChild variant="outline" className="hidden sm:inline-flex">
               <a href={isAdmin.data ? "/admin" : "/admin/bootstrap"}>{isAdmin.data ? "Admin" : "Bootstrap Admin"}</a>
@@ -134,17 +137,46 @@ export default function SiteHeader() {
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold">Menu</div>
               </div>
-              <div className="mt-6 flex flex-col gap-4">
+              <div className="mt-6 flex h-full flex-col gap-4">
                 <SheetClose asChild>
                   <div>
                     <NavItems onNavigate={() => undefined} />
                   </div>
                 </SheetClose>
-                <Button asChild>
-                  <a href={whatsappHref} target="_blank" rel="noreferrer">
-                    Get Early Access on WhatsApp
-                  </a>
-                </Button>
+
+                <div className="mt-auto space-y-3">
+                  <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                    <div className="text-sm font-medium">Theme</div>
+                    <ThemeToggle />
+                  </div>
+
+                  {user ? (
+                    <div className="grid gap-2">
+                      <Button asChild variant="outline">
+                        <a href={isAdmin.data ? "/admin" : "/admin/bootstrap"}>{isAdmin.data ? "Admin" : "Bootstrap Admin"}</a>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          await signOut();
+                        }}
+                      >
+                        Log out
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button asChild variant="outline">
+                      <a href="/login">Log in</a>
+                    </Button>
+                  )}
+
+                  <Button asChild>
+                    <a href={whatsappHref} target="_blank" rel="noreferrer">
+                      Get Early Access on WhatsApp
+                    </a>
+                  </Button>
+                </div>
               </div>
             </SheetContent>
           </Sheet>
