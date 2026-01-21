@@ -18,16 +18,9 @@ export function useSiteSettings() {
   return useQuery({
     queryKey: ["site-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("site_settings")
-        .select(
-          "id, brand_name, brand_tagline, header_kicker, hero_h1, hero_subtitle, whatsapp_phone_e164, whatsapp_default_message, next_drop_at, content",
-        )
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke<{ settings: SiteSettings | null }>("site-settings");
       if (error) throw error;
-      return data as SiteSettings | null;
+      return data?.settings ?? null;
     },
     staleTime: 10_000,
     refetchOnWindowFocus: false,

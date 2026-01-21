@@ -13,13 +13,9 @@ export default function EarlyAccessPanel() {
   async function load() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("early_access_signups")
-        .select("id, email, created_at")
-        .order("created_at", { ascending: false })
-        .limit(200);
+      const { data, error } = await supabase.functions.invoke("admin-early-access", { method: "GET" });
       if (error) throw error;
-      setItems((data ?? []) as SignupRow[]);
+      setItems(((data as any)?.signups ?? []) as SignupRow[]);
     } catch (e) {
       toast({ title: "Load failed", description: (e as Error).message, variant: "destructive" });
     } finally {
