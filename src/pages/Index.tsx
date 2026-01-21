@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { SOLD_BD, whatsappOrderLink } from "@/config/soldbd";
 import { useCountdown } from "@/lib/useCountdown";
 import { usePageMeta } from "@/lib/usePageMeta";
+import { useDeals } from "@/lib/useDeals";
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -18,6 +19,9 @@ export default function Index() {
   const next = useCountdown(SOLD_BD.nextDropAt);
   const whatsappHref = whatsappOrderLink(SOLD_BD.whatsapp.defaultMessage);
   const nextLabel = next.days > 0 ? `${next.days}d ${pad(next.hours)}h` : `${pad(next.hours)}:${pad(next.minutes)}:${pad(next.seconds)}`;
+
+  const dealsQuery = useDeals();
+  const deals = dealsQuery.data?.length ? dealsQuery.data : SOLD_BD.deals;
 
   return (
     <div className="bg-background">
@@ -78,7 +82,7 @@ export default function Index() {
                     </a>
                   </div>
                   <div className="grid gap-3">
-                    {SOLD_BD.deals.slice(0, 3).map((d) => (
+                    {deals.slice(0, 3).map((d) => (
                       <div key={d.id} className="flex items-center gap-3 rounded-xl border p-3">
                         <img src={d.imageUrl} alt={`${d.title} thumbnail`} className="h-14 w-14 rounded-lg object-cover" loading="lazy" />
                         <div className="min-w-0 flex-1">
