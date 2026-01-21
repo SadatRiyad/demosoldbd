@@ -5,6 +5,22 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FlashDeal } from "@/config/soldbd";
 import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import { useCountdown } from "@/lib/useCountdown";
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function EndingIn({ endsAt }: { endsAt: string }) {
+  const c = useCountdown(endsAt);
+  if (c.isComplete) return <span className="text-xs text-muted-foreground">Ended</span>;
+  const label = c.days > 0 ? `${c.days}d ${pad(c.hours)}:${pad(c.minutes)}` : `${pad(c.hours)}:${pad(c.minutes)}:${pad(c.seconds)}`;
+  return (
+    <span className="text-[11px] text-muted-foreground" aria-label={`Ending in ${label}`}>
+      Ending in <span className="font-medium text-foreground">{label}</span>
+    </span>
+  );
+}
 
 function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
   return (
@@ -26,6 +42,10 @@ function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
             {deal.category}
           </div>
           <div className="min-w-0 truncate text-xs text-muted-foreground">• {deal.description}</div>
+        </div>
+
+        <div className="mt-1">
+          <EndingIn endsAt={deal.endsAt} />
         </div>
       </div>
       <Badge className="shrink-0" variant={deal.stock <= 0 ? "destructive" : "secondary"}>

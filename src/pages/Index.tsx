@@ -73,13 +73,13 @@ export default function Index() {
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="animate-fade-in">
               <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">{headerKicker}</Badge>
-              <h1 className="mt-5 break-words text-balance font-display text-3xl font-extrabold tracking-tight sm:text-4xl md:text-6xl">
+              <h1 className="mt-5 text-pretty font-display text-3xl font-extrabold leading-[1.07] tracking-tight sm:text-4xl sm:leading-[1.08] md:text-6xl md:leading-[1.03]">
                 <span className={heroH1ClampXs ? "sm:hidden max-[360px]:clamp-2" : "sm:hidden"}>
                   {heroH1Mobile.trim().length > 0 ? heroH1Mobile : heroH1}
                 </span>
                 <span className="hidden sm:inline">{heroH1}</span>
               </h1>
-              <p className="mt-4 max-w-xl text-lg text-muted-foreground md:text-xl">
+              <p className="mt-3 max-w-xl text-base text-muted-foreground sm:text-lg md:mt-4 md:text-xl">
                 {heroSubtitle}
               </p>
 
