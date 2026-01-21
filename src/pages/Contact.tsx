@@ -3,12 +3,14 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { SOLD_BD } from "@/config/soldbd";
 import { whatsappOrderLink } from "@/lib/whatsapp";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Clock, MapPin, ShieldCheck } from "lucide-react";
 
 const emailSchema = z.string().trim().email().max(255);
 
@@ -51,29 +53,53 @@ export default function Contact() {
 
   return (
     <div className="bg-background">
-      <section className="container py-12 md:py-16">
-        <header className="max-w-2xl">
-          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Get Early Access</h1>
-          <p className="mt-3 text-muted-foreground">
-            Join the WhatsApp list for drop alerts, or leave your email for upcoming updates.
-          </p>
-        </header>
+      <section className="relative overflow-hidden bg-hero-gradient">
+        <div className="container py-14 md:py-20">
+          <header className="max-w-3xl">
+            <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">Early Access & Support</Badge>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight md:text-5xl">Get Early Access</h1>
+            <p className="mt-3 text-muted-foreground md:text-lg">
+              Join the WhatsApp list for drop alerts, or leave your email for updates. We’ll help you order fast.
+            </p>
+          </header>
+        </div>
+      </section>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <Card className="shadow-premium">
+      <section className="container py-12 md:py-16">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="shadow-premium lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-xl">WhatsApp</CardTitle>
+              <CardTitle className="text-xl">WhatsApp (fastest)</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Fastest way to order and get notified — tap below.
-              </p>
-              <Button asChild className="mt-4 w-full">
+              <p className="text-sm text-muted-foreground">Tap below to open a chat with our default message.</p>
+              <Button asChild size="lg" className="mt-4 w-full">
                 <a href={whatsappHref} target="_blank" rel="noreferrer">
-                  Get Early Access on WhatsApp
+                  Chat on WhatsApp
                 </a>
               </Button>
-              <p className="mt-3 text-xs text-muted-foreground">Number: {phone}</p>
+              <p className="mt-3 text-xs text-muted-foreground">WhatsApp: {phone}</p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Clock className="h-4 w-4 text-primary" /> Support hours
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">10:00 AM – 10:00 PM (BDT)</div>
+                </div>
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <MapPin className="h-4 w-4 text-primary" /> Location
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">Dhaka, Bangladesh</div>
+                </div>
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <ShieldCheck className="h-4 w-4 text-primary" /> Trust
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">Clear timers & stock transparency</div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -98,10 +124,29 @@ export default function Contact() {
                   Notify me
                 </Button>
                 {saved && <div className="text-sm text-muted-foreground">Saved — we’ll use this for next-drop updates.</div>}
-                <div className="text-xs text-muted-foreground">
-                  MVP note: this saves locally in your browser; connect Cloud later for real email capture.
-                </div>
+                <div className="text-xs text-muted-foreground">We only use this for drop alerts. No spam.</div>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <Card className="shadow-premium">
+            <CardContent className="p-6">
+              <div className="text-sm font-semibold">Returns & refunds</div>
+              <p className="mt-2 text-sm text-muted-foreground">Handled by the seller. We’ll help connect you quickly on WhatsApp.</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-premium">
+            <CardContent className="p-6">
+              <div className="text-sm font-semibold">Shipping</div>
+              <p className="mt-2 text-sm text-muted-foreground">Delivery time and cost depend on the seller and your location.</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-premium">
+            <CardContent className="p-6">
+              <div className="text-sm font-semibold">Privacy</div>
+              <p className="mt-2 text-sm text-muted-foreground">We store your email for early access alerts only.</p>
             </CardContent>
           </Card>
         </div>

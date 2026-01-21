@@ -56,6 +56,8 @@ export default function Index() {
     ((settings.data?.content as any)?.socialProof as string[] | undefined) ??
     ["Fast response on WhatsApp — got my deal confirmed in minutes.", "Stock was accurate. When it says 7 left, it’s real."];
 
+  const faqItems = ((settings.data?.content as any)?.faq as Array<{ q: string; a: string }> | undefined) ?? undefined;
+
   return (
     <div className="bg-background">
       <section className="relative overflow-hidden bg-hero-gradient">
@@ -192,7 +194,7 @@ export default function Index() {
         </div>
       </section>
 
-      <FaqSection />
+      <FaqSection items={faqItems} />
       <AboutTeaserSection />
     </div>
   );

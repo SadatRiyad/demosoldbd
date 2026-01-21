@@ -8,6 +8,7 @@ import DealsPanel from "@/pages/admin/DealsPanel";
 import EarlyAccessPanel from "@/pages/admin/EarlyAccessPanel";
 import ExternalStoragePanel from "@/pages/admin/ExternalStoragePanel";
 import MysqlStatusPanel from "@/pages/admin/MysqlStatusPanel";
+import FaqPanel from "@/pages/admin/FaqPanel";
 
 export default function AdminDashboard() {
   usePageMeta({ title: "Admin | sold.bd", description: "Admin dashboard for sold.bd." });
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
                 <TabsTrigger value="storage">Storage</TabsTrigger>
                 <TabsTrigger value="signups">Early Access</TabsTrigger>
                 <TabsTrigger value="mysql">MySQL</TabsTrigger>
+                <TabsTrigger value="faq">FAQ</TabsTrigger>
               </TabsList>
               <TabsContent value="site" className="mt-6">
                 <SiteSettingsPanel />
@@ -53,6 +55,9 @@ export default function AdminDashboard() {
               </TabsContent>
               <TabsContent value="mysql" className="mt-6">
                 <MysqlStatusPanel />
+              </TabsContent>
+              <TabsContent value="faq" className="mt-6">
+                <FaqPanel />
               </TabsContent>
             </Tabs>
           </CardContent>
