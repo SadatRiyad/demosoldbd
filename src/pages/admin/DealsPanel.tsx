@@ -8,17 +8,30 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { DEFAULT_CATEGORIES } from "@/config/soldbd";
+import { useSiteSettings } from "@/lib/useSiteSettings";
 
-const CATEGORIES = ["Electronics", "Fashion", "Food", "Home", "Beauty"] as const;
-type Category = (typeof CATEGORIES)[number];
+function toLocalDateTimeValue(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const tzOffsetMs = d.getTimezoneOffset() * 60_000;
+  const local = new Date(d.getTime() - tzOffsetMs);
+  return local.toISOString().slice(0, 16);
+}
+
+function toIsoFromLocalDateTimeValue(v: string) {
+  // datetime-local is interpreted as local time by the Date constructor.
+  const d = new Date(v);
+  return d.toISOString();
+}
 
 const schema = z.object({
   title: z.string().trim().min(3).max(120),
   description: z.string().trim().min(5).max(500),
-  category: z.enum(CATEGORIES),
+  category: z.string().trim().min(2).max(40),
   priceBdt: z.coerce.number().int().min(0).max(1_000_000).optional(),
   stock: z.coerce.number().int().min(0).max(1_000_000),
-  endsAt: z.string().trim().min(8).max(40),
+  endsAtLocal: z.string().trim().min(8).max(40),
   imageUrl: z.string().trim().url().max(500).optional(),
 });
 type FormValues = z.infer<typeof schema>;
@@ -27,7 +40,7 @@ type AdminDeal = {
   id: string;
   title: string;
   description: string;
-  category: Category;
+  category: string;
   priceBdt?: number;
   imageUrl: string;
   stock: number;
@@ -37,10 +50,23 @@ type AdminDeal = {
 
 export default function DealsPanel() {
   const { toast } = useToast();
+  const settings = useSiteSettings();
   const [loading, setLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [items, setItems] = React.useState<AdminDeal[]>([]);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+
+  const categories = React.useMemo(() => {
+    const raw = (settings.data?.content as any)?.dealCategories as unknown;
+    const fromSettings = Array.isArray(raw)
+      ? raw
+          .map((v) => String(v ?? "").trim())
+          .filter(Boolean)
+          .slice(0, 20)
+      : [];
+    const base = fromSettings.length ? fromSettings : [...DEFAULT_CATEGORIES];
+    return Array.from(new Set(base));
+  }, [settings.data]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -50,7 +76,7 @@ export default function DealsPanel() {
       category: "Electronics",
       priceBdt: undefined,
       stock: 1,
-      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+      endsAtLocal: toLocalDateTimeValue(new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString()),
       imageUrl: "",
     },
   });
@@ -81,7 +107,7 @@ export default function DealsPanel() {
       category: d.category,
       priceBdt: d.priceBdt,
       stock: d.stock,
-      endsAt: d.endsAt,
+      endsAtLocal: toLocalDateTimeValue(d.endsAt),
       imageUrl: d.imageUrl,
     });
   }
@@ -94,7 +120,7 @@ export default function DealsPanel() {
       category: "Electronics",
       priceBdt: undefined,
       stock: 1,
-      endsAt: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
+      endsAtLocal: toLocalDateTimeValue(new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString()),
       imageUrl: "",
     });
   }
@@ -102,6 +128,7 @@ export default function DealsPanel() {
   async function onCreate(values: FormValues) {
     setSaving(true);
     try {
+      if (!categories.includes(values.category)) throw new Error("Category must be one of your configured categories.");
       const payload = {
         title: values.title,
         description: values.description,
@@ -109,7 +136,7 @@ export default function DealsPanel() {
         price_bdt: typeof values.priceBdt === "number" ? values.priceBdt : null,
         image_url: values.imageUrl ?? "",
         stock: values.stock,
-        ends_at: new Date(values.endsAt).toISOString(),
+        ends_at: toIsoFromLocalDateTimeValue(values.endsAtLocal),
         is_active: 1,
       };
       const { data, error } = await supabase.functions.invoke("admin-deals", { method: "POST", body: payload });
@@ -129,6 +156,7 @@ export default function DealsPanel() {
     if (!editingId) return;
     setSaving(true);
     try {
+      if (!categories.includes(values.category)) throw new Error("Category must be one of your configured categories.");
       const payload = {
         id: editingId,
         title: values.title,
@@ -137,7 +165,7 @@ export default function DealsPanel() {
         price_bdt: typeof values.priceBdt === "number" ? values.priceBdt : null,
         image_url: values.imageUrl ?? "",
         stock: values.stock,
-        ends_at: new Date(values.endsAt).toISOString(),
+        ends_at: toIsoFromLocalDateTimeValue(values.endsAtLocal),
       };
       const { data, error } = await supabase.functions.invoke("admin-deals", { method: "PUT", body: payload });
       if (error) throw error;
@@ -200,12 +228,12 @@ export default function DealsPanel() {
           </div>
           <div className="grid gap-2">
             <div className="text-sm font-medium">Category</div>
-            <Select value={form.watch("category")} onValueChange={(v) => form.setValue("category", v as Category)}>
+            <Select value={form.watch("category")} onValueChange={(v) => form.setValue("category", v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
                   </SelectItem>
@@ -224,8 +252,8 @@ export default function DealsPanel() {
             </div>
           </div>
           <div className="grid gap-2">
-            <div className="text-sm font-medium">Ends at (ISO)</div>
-            <Input {...form.register("endsAt")} />
+            <div className="text-sm font-medium">Ends at</div>
+            <Input type="datetime-local" {...form.register("endsAtLocal")} />
           </div>
 
           <div className="grid gap-2">

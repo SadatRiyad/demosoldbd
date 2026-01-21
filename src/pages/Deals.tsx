@@ -1,5 +1,5 @@
 import * as React from "react";
-import { SOLD_BD, type DealCategory, type FlashDeal } from "@/config/soldbd";
+import { DEFAULT_CATEGORIES, SOLD_BD, type DealCategory, type FlashDeal } from "@/config/soldbd";
 import DealCard from "@/components/deals/DealCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,11 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { useDeals } from "@/lib/useDeals";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
-import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import { getDealCategoryMeta } from "@/lib/dealCategoryMeta";
+import { useSiteSettings } from "@/lib/useSiteSettings";
 import { Search } from "lucide-react";
 
 type SortMode = "endingSoon" | "newest" | "stock";
-
-const CATEGORIES: Array<DealCategory | "All"> = ["All", "Electronics", "Fashion", "Food", "Home", "Beauty"];
 
 function sortDeals(deals: FlashDeal[], sort: SortMode) {
   const copy = [...deals];
@@ -28,6 +27,22 @@ export default function Deals() {
     title: "Flash Deals | sold.bd",
     description: "Browse live flash deals from Bangladeshi sellers — limited time, limited stock.",
   });
+
+  const settings = useSiteSettings();
+  const categories = React.useMemo(() => {
+    const raw = (settings.data?.content as any)?.dealCategories as unknown;
+    const fromSettings = Array.isArray(raw)
+      ? raw
+          .map((v) => String(v ?? "").trim())
+          .filter(Boolean)
+          .slice(0, 20)
+      : [];
+    const base = fromSettings.length ? fromSettings : [...DEFAULT_CATEGORIES];
+    // Unique + stable ordering
+    return Array.from(new Set(base));
+  }, [settings.data]);
+
+  const CATEGORIES: Array<DealCategory | "All"> = React.useMemo(() => ["All", ...categories], [categories]);
 
   const [category, setCategory] = React.useState<(typeof CATEGORIES)[number]>("All");
   const [sort, setSort] = React.useState<SortMode>("endingSoon");
@@ -109,7 +124,7 @@ export default function Deals() {
                           ) : (
                             <span className="inline-flex items-center gap-2">
                               {(() => {
-                                const Icon = DEAL_CATEGORY_META[c].Icon;
+                                const Icon = getDealCategoryMeta(c).Icon;
                                 return <Icon className="h-4 w-4" />;
                               })()}
                               {c}
@@ -136,7 +151,7 @@ export default function Deals() {
                         ) : (
                           <span className="inline-flex items-center gap-2">
                             {(() => {
-                              const Icon = DEAL_CATEGORY_META[c].Icon;
+                              const Icon = getDealCategoryMeta(c).Icon;
                               return <Icon className="h-4 w-4" />;
                             })()}
                             {c}

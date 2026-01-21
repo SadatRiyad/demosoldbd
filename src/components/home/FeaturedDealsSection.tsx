@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FlashDeal } from "@/config/soldbd";
-import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import { getDealCategoryMeta } from "@/lib/dealCategoryMeta";
 import { useCountdown } from "@/lib/useCountdown";
 
 function pad(n: number) {
@@ -43,7 +43,7 @@ function FeaturedDealRow({ deal, endsSoonThresholdSeconds }: { deal: FlashDeal; 
         <div className="truncate text-sm font-semibold">{deal.title}</div>
         <div className="mt-0.5 flex items-center gap-2">
           {isLive ? (
-            <Badge className="bg-brand text-brand-foreground hover:bg-brand/90 px-2 py-0 text-[10px] font-semibold">LIVE</Badge>
+            <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-0 text-[10px] font-semibold">LIVE</Badge>
           ) : isExpired ? (
             <Badge variant="secondary" className="px-2 py-0 text-[10px] font-semibold">
               SOLD
@@ -51,7 +51,7 @@ function FeaturedDealRow({ deal, endsSoonThresholdSeconds }: { deal: FlashDeal; 
           ) : null}
           <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             {(() => {
-              const Icon = DEAL_CATEGORY_META[deal.category].Icon;
+              const Icon = getDealCategoryMeta(deal.category).Icon;
               return <Icon className="h-3.5 w-3.5" />;
             })()}
             {deal.category}

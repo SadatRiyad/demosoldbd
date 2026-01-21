@@ -1,4 +1,7 @@
-export type DealCategory = "Electronics" | "Fashion" | "Food" | "Home" | "Beauty";
+export const DEFAULT_CATEGORIES = ["Electronics", "Fashion", "Food", "Home", "Beauty"] as const;
+
+// Allow admin-defined categories while keeping strong typing for the defaults.
+export type DealCategory = (typeof DEFAULT_CATEGORIES)[number] | (string & {});
 
 export type FlashDeal = {
   id: string;
