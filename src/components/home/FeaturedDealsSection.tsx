@@ -11,7 +11,7 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function EndingIn({ endsAt }: { endsAt: string }) {
+function EndingIn({ endsAt, endsSoonThresholdSeconds }: { endsAt: string; endsSoonThresholdSeconds: number }) {
   const c = useCountdown(endsAt);
   if (c.isComplete) return <span className="text-xs text-muted-foreground">Ended</span>;
   const secondsLeft = c.days * 86400 + c.hours * 3600 + c.minutes * 60 + c.seconds;
@@ -19,7 +19,7 @@ function EndingIn({ endsAt }: { endsAt: string }) {
   return (
     <span className="text-[11px] text-muted-foreground" aria-label={`Ending in ${label}`}>
       Ending in <span className="font-medium text-foreground">{label}</span>
-      {secondsLeft > 0 && secondsLeft <= 600 ? (
+      {secondsLeft > 0 && secondsLeft <= endsSoonThresholdSeconds ? (
         <Badge variant="secondary" className="ml-2 px-2 py-0 text-[10px] font-semibold">
           Ends soon
         </Badge>
@@ -28,7 +28,7 @@ function EndingIn({ endsAt }: { endsAt: string }) {
   );
 }
 
-function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
+function FeaturedDealRow({ deal, endsSoonThresholdSeconds }: { deal: FlashDeal; endsSoonThresholdSeconds: number }) {
   const isExpired = new Date(deal.endsAt).getTime() <= Date.now();
   const isLive = deal.stock > 0 && !isExpired;
   return (
@@ -60,7 +60,7 @@ function FeaturedDealRow({ deal }: { deal: FlashDeal }) {
         </div>
 
         <div className="mt-1">
-          <EndingIn endsAt={deal.endsAt} />
+          <EndingIn endsAt={deal.endsAt} endsSoonThresholdSeconds={endsSoonThresholdSeconds} />
         </div>
       </div>
       <Badge className="shrink-0" variant={deal.stock <= 0 ? "destructive" : "secondary"}>
@@ -86,9 +86,11 @@ function FeaturedDealRowSkeleton() {
 export default function FeaturedDealsSection({
   deals,
   loading,
+  endsSoonThresholdSeconds = 10 * 60,
 }: {
   deals: FlashDeal[];
   loading: boolean;
+  endsSoonThresholdSeconds?: number;
 }) {
   const items = React.useMemo(() => deals.slice(0, 3), [deals]);
 
@@ -110,7 +112,7 @@ export default function FeaturedDealsSection({
               <FeaturedDealRowSkeleton />
             </>
           ) : (
-            items.map((d) => <FeaturedDealRow key={d.id} deal={d} />)
+            items.map((d) => <FeaturedDealRow key={d.id} deal={d} endsSoonThresholdSeconds={endsSoonThresholdSeconds} />)
           )}
         </div>
 

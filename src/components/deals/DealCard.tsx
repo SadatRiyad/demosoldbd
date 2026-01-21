@@ -11,6 +11,11 @@ import { useCountdown } from "@/lib/useCountdown";
 export default function DealCard({ deal }: { deal: FlashDeal }) {
   const settings = useSiteSettings();
   const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
+  const endsSoonThresholdMinutes = (settings.data?.content as any)?.endsSoonThresholdMinutes as number | undefined;
+  const endsSoonThresholdSeconds =
+    typeof endsSoonThresholdMinutes === "number" && Number.isFinite(endsSoonThresholdMinutes)
+      ? Math.min(60 * 60, Math.max(60, Math.round(endsSoonThresholdMinutes * 60)))
+      : 10 * 60;
 
   const soldOut = deal.stock <= 0;
   const isExpired = new Date(deal.endsAt).getTime() <= Date.now();
@@ -18,7 +23,7 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
 
   const c = useCountdown(deal.endsAt);
   const secondsLeft = c.days * 86400 + c.hours * 3600 + c.minutes * 60 + c.seconds;
-  const endsSoon = !c.isComplete && secondsLeft > 0 && secondsLeft <= 600;
+  const endsSoon = !c.isComplete && secondsLeft > 0 && secondsLeft <= endsSoonThresholdSeconds;
 
   const whatsappHref = whatsappOrderLink(
     phone,
