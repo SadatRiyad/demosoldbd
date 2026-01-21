@@ -9,6 +9,7 @@ import { useIsAdmin } from "@/lib/useIsAdmin";
 import { Menu } from "lucide-react";
 import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import BackendStatusPill from "@/components/site/BackendStatusPill";
 
 const NavItems = ({ onNavigate }: { onNavigate?: () => void }) => (
   <nav className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
@@ -109,6 +110,7 @@ export default function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <BackendStatusPill className="hidden lg:inline-flex" />
           <ThemeToggle className="hidden sm:inline-flex" />
 
           {user ? (
