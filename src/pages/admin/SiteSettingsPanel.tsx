@@ -8,8 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import ContactTrustSettings from "@/pages/admin/ContactTrustSettings";
+
+const THRESHOLDS = ["5", "10", "15"] as const;
+type ThresholdStr = (typeof THRESHOLDS)[number];
+
+function normalizeThresholdStr(v: unknown): ThresholdStr {
+  const s = typeof v === "number" ? String(v) : typeof v === "string" ? v.trim() : "";
+  return (THRESHOLDS as readonly string[]).includes(s) ? (s as ThresholdStr) : "10";
+}
 
 const schema = z.object({
   brandName: z.string().trim().min(2).max(60),
@@ -18,6 +27,7 @@ const schema = z.object({
   heroH1: z.string().trim().min(10).max(140),
   heroH1Mobile: z.string().trim().max(140).optional(),
   heroH1ClampXs: z.boolean().optional(),
+  endsSoonThresholdMinutes: z.enum(THRESHOLDS).optional(),
   heroSubtitle: z.string().trim().min(10).max(220),
   whatsappPhoneE164: z.string().trim().min(8).max(20),
   whatsappDefaultMessage: z.string().trim().min(5).max(400),
@@ -41,6 +51,7 @@ export default function SiteSettingsPanel() {
       heroH1: "Get it Before it’s Sold — Bangladesh’s Flash Deals Marketplace",
       heroH1Mobile: "Get it before it’s sold — flash deals in Bangladesh",
       heroH1ClampXs: false,
+      endsSoonThresholdMinutes: "10",
       heroSubtitle: "Limited-stock drops from local sellers. Miss it, it’s gone forever.",
       whatsappPhoneE164: "+8801700000000",
       whatsappDefaultMessage: "Hi sold.bd! I want early access and updates about upcoming flash drops.",
@@ -57,6 +68,7 @@ export default function SiteSettingsPanel() {
       heroH1: settings.data.hero_h1,
       heroH1Mobile: (settings.data.content as any)?.heroH1Mobile ?? "",
       heroH1ClampXs: (settings.data.content as any)?.heroH1ClampXs ?? false,
+      endsSoonThresholdMinutes: normalizeThresholdStr((settings.data.content as any)?.endsSoonThresholdMinutes),
       heroSubtitle: settings.data.hero_subtitle,
       whatsappPhoneE164: settings.data.whatsapp_phone_e164,
       whatsappDefaultMessage: settings.data.whatsapp_default_message,
@@ -91,6 +103,7 @@ export default function SiteSettingsPanel() {
           content_patch: {
             heroH1Mobile: values.heroH1Mobile?.trim() || null,
             heroH1ClampXs: values.heroH1ClampXs ?? false,
+            endsSoonThresholdMinutes: Number.parseInt(values.endsSoonThresholdMinutes ?? "10", 10),
           },
         },
       });
@@ -185,6 +198,23 @@ export default function SiteSettingsPanel() {
             <div className="text-xs text-muted-foreground">Applies only to very small devices to prevent overflow.</div>
           </div>
           <Switch checked={!!form.watch("heroH1ClampXs")} onCheckedChange={(v) => form.setValue("heroH1ClampXs", v)} />
+        </div>
+        <div className="grid gap-2">
+          <div className="text-sm font-medium">“Ends soon” threshold</div>
+          <Select
+            value={form.watch("endsSoonThresholdMinutes") ?? "10"}
+            onValueChange={(v) => form.setValue("endsSoonThresholdMinutes", v as any)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Choose" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5 minutes</SelectItem>
+              <SelectItem value="10">10 minutes</SelectItem>
+              <SelectItem value="15">15 minutes</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="text-xs text-muted-foreground">Controls when the “Ends soon” badge appears on deal cards.</div>
         </div>
         <div className="grid gap-2">
           <div className="text-sm font-medium">Hero subtitle</div>

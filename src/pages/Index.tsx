@@ -33,6 +33,11 @@ export default function Index() {
   const heroH1 = settings.data?.hero_h1 ?? "Get it Before it’s Sold — Bangladesh’s Flash Deals Marketplace";
   const heroH1Mobile = ((settings.data?.content as any)?.heroH1Mobile as string | undefined) ?? "";
   const heroH1ClampXs = (((settings.data?.content as any)?.heroH1ClampXs as boolean | undefined) ?? false) === true;
+  const endsSoonThresholdMinutes = (settings.data?.content as any)?.endsSoonThresholdMinutes as number | undefined;
+  const endsSoonThresholdSeconds =
+    typeof endsSoonThresholdMinutes === "number" && Number.isFinite(endsSoonThresholdMinutes)
+      ? Math.min(60 * 60, Math.max(60, Math.round(endsSoonThresholdMinutes * 60)))
+      : 10 * 60;
   const heroSubtitle =
     settings.data?.hero_subtitle ?? "Limited-stock drops from local sellers. Miss it, it’s gone forever.";
 
@@ -113,7 +118,7 @@ export default function Index() {
             </div>
 
             <div className="relative animate-enter">
-              <FeaturedDealsSection deals={deals} loading={dealsLoading} />
+              <FeaturedDealsSection deals={deals} loading={dealsLoading} endsSoonThresholdSeconds={endsSoonThresholdSeconds} />
             </div>
           </div>
         </div>
