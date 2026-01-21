@@ -7,6 +7,7 @@ import { useSiteSettings } from "@/lib/useSiteSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import ContactTrustSettings from "@/pages/admin/ContactTrustSettings";
 
@@ -15,6 +16,8 @@ const schema = z.object({
   brandTagline: z.string().trim().min(2).max(120),
   headerKicker: z.string().trim().min(2).max(80),
   heroH1: z.string().trim().min(10).max(140),
+  heroH1Mobile: z.string().trim().max(140).optional(),
+  heroH1ClampXs: z.boolean().optional(),
   heroSubtitle: z.string().trim().min(10).max(220),
   whatsappPhoneE164: z.string().trim().min(8).max(20),
   whatsappDefaultMessage: z.string().trim().min(5).max(400),
@@ -36,6 +39,8 @@ export default function SiteSettingsPanel() {
       brandTagline: "Bangladesh’s Flash Deals Marketplace",
       headerKicker: "Live drops • Limited stock",
       heroH1: "Get it Before it’s Sold — Bangladesh’s Flash Deals Marketplace",
+      heroH1Mobile: "Get it before it’s sold — flash deals in Bangladesh",
+      heroH1ClampXs: false,
       heroSubtitle: "Limited-stock drops from local sellers. Miss it, it’s gone forever.",
       whatsappPhoneE164: "+8801700000000",
       whatsappDefaultMessage: "Hi sold.bd! I want early access and updates about upcoming flash drops.",
@@ -50,6 +55,8 @@ export default function SiteSettingsPanel() {
       brandTagline: settings.data.brand_tagline,
       headerKicker: settings.data.header_kicker,
       heroH1: settings.data.hero_h1,
+      heroH1Mobile: (settings.data.content as any)?.heroH1Mobile ?? "",
+      heroH1ClampXs: (settings.data.content as any)?.heroH1ClampXs ?? false,
       heroSubtitle: settings.data.hero_subtitle,
       whatsappPhoneE164: settings.data.whatsapp_phone_e164,
       whatsappDefaultMessage: settings.data.whatsapp_default_message,
@@ -76,6 +83,20 @@ export default function SiteSettingsPanel() {
       });
       if (error) throw error;
       if ((data as any)?.ok !== true) throw new Error((data as any)?.error ?? "Save failed");
+
+      // Mobile hero settings live in content JSON.
+      const { data: data2, error: error2 } = await supabase.functions.invoke("admin-site-settings", {
+        method: "PATCH",
+        body: {
+          content_patch: {
+            heroH1Mobile: values.heroH1Mobile?.trim() || null,
+            heroH1ClampXs: values.heroH1ClampXs ?? false,
+          },
+        },
+      });
+      if (error2) throw error2;
+      if ((data2 as any)?.ok !== true) throw new Error((data2 as any)?.error ?? "Save failed");
+
       toast({ title: "Saved", description: "Site settings updated." });
       await settings.refetch();
     } catch (e) {
@@ -152,6 +173,18 @@ export default function SiteSettingsPanel() {
         <div className="grid gap-2">
           <div className="text-sm font-medium">Hero H1</div>
           <Textarea rows={3} {...form.register("heroH1")} />
+        </div>
+        <div className="grid gap-2">
+          <div className="text-sm font-medium">Hero H1 (mobile)</div>
+          <Textarea rows={2} placeholder="Shorter headline for small phones" {...form.register("heroH1Mobile")} />
+          <div className="text-xs text-muted-foreground">Shown on small screens (sm and below). Leave blank to use the main H1.</div>
+        </div>
+        <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+          <div>
+            <div className="text-sm font-medium">Clamp H1 to 2 lines (ultra-small)</div>
+            <div className="text-xs text-muted-foreground">Applies only to very small devices to prevent overflow.</div>
+          </div>
+          <Switch checked={!!form.watch("heroH1ClampXs")} onCheckedChange={(v) => form.setValue("heroH1ClampXs", v)} />
         </div>
         <div className="grid gap-2">
           <div className="text-sm font-medium">Hero subtitle</div>
