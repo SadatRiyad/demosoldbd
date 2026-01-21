@@ -6,7 +6,7 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type DealCategory = "Electronics" | "Fashion" | "Food" | "Home" | "Beauty";
+type DealCategory = string;
 
 type DealRow = {
   id: string;

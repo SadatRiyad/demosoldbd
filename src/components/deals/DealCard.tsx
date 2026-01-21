@@ -5,7 +5,7 @@ import CountdownPill from "@/components/deals/CountdownPill";
 import { FlashDeal, SOLD_BD } from "@/config/soldbd";
 import { whatsappOrderLink } from "@/lib/whatsapp";
 import { useSiteSettings } from "@/lib/useSiteSettings";
-import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import { getDealCategoryMeta } from "@/lib/dealCategoryMeta";
 import { useCountdown } from "@/lib/useCountdown";
 
 export default function DealCard({ deal }: { deal: FlashDeal }) {
@@ -43,7 +43,7 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
         />
         <div className="absolute left-3 top-3 flex gap-2">
           {isLive ? (
-            <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">LIVE</Badge>
+            <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">LIVE</Badge>
           ) : isExpired ? (
             <Badge variant="secondary">SOLD</Badge>
           ) : null}
@@ -54,7 +54,7 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
           ) : null}
           <Badge variant="secondary" className="inline-flex items-center gap-1.5">
             {(() => {
-              const Icon = DEAL_CATEGORY_META[deal.category].Icon;
+              const Icon = getDealCategoryMeta(deal.category).Icon;
               return <Icon className="h-3.5 w-3.5" />;
             })()}
             {deal.category}

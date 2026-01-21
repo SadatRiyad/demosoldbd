@@ -15,6 +15,29 @@ import ContactTrustSettings from "@/pages/admin/ContactTrustSettings";
 const THRESHOLDS = ["5", "10", "15"] as const;
 type ThresholdStr = (typeof THRESHOLDS)[number];
 
+function toLocalDateTimeValue(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const tzOffsetMs = d.getTimezoneOffset() * 60_000;
+  const local = new Date(d.getTime() - tzOffsetMs);
+  return local.toISOString().slice(0, 16);
+}
+
+function normalizeCategoriesText(v: unknown) {
+  const raw = Array.isArray(v) ? v.join(", ") : typeof v === "string" ? v : "";
+  return raw;
+}
+
+function parseCategoriesText(v: string) {
+  const parts = v
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 20)
+    .map((s) => s.slice(0, 40));
+  return Array.from(new Set(parts));
+}
+
 function normalizeThresholdStr(v: unknown): ThresholdStr {
   const s = typeof v === "number" ? String(v) : typeof v === "string" ? v.trim() : "";
   return (THRESHOLDS as readonly string[]).includes(s) ? (s as ThresholdStr) : "10";
@@ -28,6 +51,7 @@ const schema = z.object({
   heroH1Mobile: z.string().trim().max(140).optional(),
   heroH1ClampXs: z.boolean().optional(),
   endsSoonThresholdMinutes: z.enum(THRESHOLDS).optional(),
+  dealCategories: z.string().optional(),
   heroSubtitle: z.string().trim().min(10).max(220),
   whatsappPhoneE164: z.string().trim().min(8).max(20),
   whatsappDefaultMessage: z.string().trim().min(5).max(400),
@@ -52,6 +76,7 @@ export default function SiteSettingsPanel() {
       heroH1Mobile: "Get it before it’s sold — flash deals in Bangladesh",
       heroH1ClampXs: false,
       endsSoonThresholdMinutes: "10",
+      dealCategories: "Electronics, Fashion, Food, Home, Beauty",
       heroSubtitle: "Limited-stock drops from local sellers. Miss it, it’s gone forever.",
       whatsappPhoneE164: "+8801700000000",
       whatsappDefaultMessage: "Hi sold.bd! I want early access and updates about upcoming flash drops.",
@@ -69,10 +94,11 @@ export default function SiteSettingsPanel() {
       heroH1Mobile: (settings.data.content as any)?.heroH1Mobile ?? "",
       heroH1ClampXs: (settings.data.content as any)?.heroH1ClampXs ?? false,
       endsSoonThresholdMinutes: normalizeThresholdStr((settings.data.content as any)?.endsSoonThresholdMinutes),
+      dealCategories: normalizeCategoriesText((settings.data.content as any)?.dealCategories),
       heroSubtitle: settings.data.hero_subtitle,
       whatsappPhoneE164: settings.data.whatsapp_phone_e164,
       whatsappDefaultMessage: settings.data.whatsapp_default_message,
-      nextDropAt: settings.data.next_drop_at ?? "",
+      nextDropAt: settings.data.next_drop_at ? toLocalDateTimeValue(settings.data.next_drop_at) : "",
     });
   }, [settings.data, form]);
 
@@ -104,6 +130,7 @@ export default function SiteSettingsPanel() {
             heroH1Mobile: values.heroH1Mobile?.trim() || null,
             heroH1ClampXs: values.heroH1ClampXs ?? false,
             endsSoonThresholdMinutes: Number.parseInt(values.endsSoonThresholdMinutes ?? "10", 10),
+            dealCategories: parseCategoriesText(values.dealCategories ?? ""),
           },
         },
       });
@@ -217,6 +244,11 @@ export default function SiteSettingsPanel() {
           <div className="text-xs text-muted-foreground">Controls when the “Ends soon” badge appears on deal cards.</div>
         </div>
         <div className="grid gap-2">
+          <div className="text-sm font-medium">Deal categories (comma-separated)</div>
+          <Input placeholder="Electronics, Fashion, Food…" {...form.register("dealCategories")} />
+          <div className="text-xs text-muted-foreground">Used for category filters and deal creation in Admin.</div>
+        </div>
+        <div className="grid gap-2">
           <div className="text-sm font-medium">Hero subtitle</div>
           <Textarea rows={3} {...form.register("heroSubtitle")} />
         </div>
@@ -230,8 +262,8 @@ export default function SiteSettingsPanel() {
           <Textarea rows={3} {...form.register("whatsappDefaultMessage")} />
         </div>
         <div className="grid gap-2">
-          <div className="text-sm font-medium">Next drop at (ISO)</div>
-          <Input placeholder="2026-01-21T18:00:00+06:00" {...form.register("nextDropAt")} />
+          <div className="text-sm font-medium">Next drop at</div>
+          <Input type="datetime-local" {...form.register("nextDropAt")} />
         </div>
 
         <Button type="submit" disabled={saving} className="w-full">

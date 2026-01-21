@@ -1,6 +1,6 @@
 import { corsHeaders, json, requireAdmin } from "../_util/auth.ts";
 
-type DealCategory = "Electronics" | "Fashion" | "Food" | "Home" | "Beauty";
+type DealCategory = string;
 type DealRow = {
   id: string;
   title: string;
@@ -12,6 +12,18 @@ type DealRow = {
   ends_at: string;
   is_active: 0 | 1;
 };
+
+const DEFAULT_CATEGORIES = ["Electronics", "Fashion", "Food", "Home", "Beauty"];
+
+function normalizeAllowedCategories(v: unknown) {
+  const arr = Array.isArray(v) ? v : [];
+  const cleaned = arr
+    .map((x) => String(x ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 20)
+    .map((s) => s.slice(0, 40));
+  return cleaned.length ? Array.from(new Set(cleaned)) : DEFAULT_CATEGORIES;
+}
 
 function requireEnv(name: string) {
   const v = Deno.env.get(name);
@@ -59,8 +71,15 @@ function normalizeDeal(r: DealRow) {
   };
 }
 
-function isCategory(v: string): v is DealCategory {
-  return ["Electronics", "Fashion", "Food", "Home", "Beauty"].includes(v);
+async function getAllowedCategories(client: any) {
+  try {
+    const rows = (await client.query(`SELECT content_json FROM site_settings LIMIT 1`)) as Array<{ content_json?: any }>;
+    const raw = rows?.[0]?.content_json;
+    const parsed = typeof raw === "string" ? JSON.parse(raw || "{}") : (raw ?? {});
+    return normalizeAllowedCategories((parsed as any)?.dealCategories);
+  } catch {
+    return DEFAULT_CATEGORIES;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -71,6 +90,7 @@ Deno.serve(async (req) => {
     if (!admin.ok) return json(admin.status, { error: admin.error });
 
     const client = await getMysqlClient();
+    const allowedCategories = await getAllowedCategories(client);
 
     if (req.method === "GET") {
       const rows = (await client.query(
@@ -98,7 +118,7 @@ Deno.serve(async (req) => {
 
       if (!title || title.length > 120) return json(400, { ok: false, error: "Invalid title" });
       if (!description || description.length > 500) return json(400, { ok: false, error: "Invalid description" });
-      if (!isCategory(category)) return json(400, { ok: false, error: "Invalid category" });
+      if (!allowedCategories.includes(category)) return json(400, { ok: false, error: "Invalid category" });
       if (!Number.isFinite(stock) || stock < 0) return json(400, { ok: false, error: "Invalid stock" });
       if (Number.isFinite(price_bdt as any) && (price_bdt as number) < 0) return json(400, { ok: false, error: "Invalid price" });
       if (!(ends_at instanceof Date) || isNaN(ends_at.getTime())) return json(400, { ok: false, error: "Invalid ends_at" });
@@ -126,7 +146,7 @@ Deno.serve(async (req) => {
       if (!id) return json(400, { ok: false, error: "Missing id" });
       if (!title || title.length > 120) return json(400, { ok: false, error: "Invalid title" });
       if (!description || description.length > 500) return json(400, { ok: false, error: "Invalid description" });
-      if (!isCategory(category)) return json(400, { ok: false, error: "Invalid category" });
+      if (!allowedCategories.includes(category)) return json(400, { ok: false, error: "Invalid category" });
       if (!Number.isFinite(stock) || stock < 0) return json(400, { ok: false, error: "Invalid stock" });
       if (Number.isFinite(price_bdt as any) && (price_bdt as number) < 0) return json(400, { ok: false, error: "Invalid price" });
       if (!(ends_at instanceof Date) || isNaN(ends_at.getTime())) return json(400, { ok: false, error: "Invalid ends_at" });
