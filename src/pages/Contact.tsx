@@ -1,9 +1,16 @@
 import * as React from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { SOLD_BD, whatsappOrderLink } from "@/config/soldbd";
+import { SOLD_BD } from "@/config/soldbd";
+import { whatsappOrderLink } from "@/lib/whatsapp";
 import { usePageMeta } from "@/lib/usePageMeta";
+import { useSiteSettings } from "@/lib/useSiteSettings";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const emailSchema = z.string().trim().email().max(255);
 
 export default function Contact() {
   usePageMeta({
@@ -14,13 +21,29 @@ export default function Contact() {
   const [email, setEmail] = React.useState("");
   const [saved, setSaved] = React.useState(false);
 
-  const whatsappHref = whatsappOrderLink(SOLD_BD.whatsapp.defaultMessage);
+  const { toast } = useToast();
+  const settings = useSiteSettings();
 
-  function onSubmit(e: React.FormEvent) {
+  const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
+  const defaultMsg = settings.data?.whatsapp_default_message ?? SOLD_BD.whatsapp.defaultMessage;
+  const whatsappHref = whatsappOrderLink(phone, defaultMsg);
+
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
-    localStorage.setItem("soldbd_email_interest", email.trim());
-    setSaved(true);
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("early_access_signups").insert({ email: parsed.data });
+      // ignore duplicates (unique constraint)
+      if (error && !String(error.message).toLowerCase().includes("duplicate")) throw error;
+      setSaved(true);
+    } catch (err) {
+      toast({ title: "Couldn’t save", description: (err as Error).message, variant: "destructive" });
+    }
   }
 
   return (
@@ -47,7 +70,7 @@ export default function Contact() {
                   Get Early Access on WhatsApp
                 </a>
               </Button>
-              <p className="mt-3 text-xs text-muted-foreground">Number: {SOLD_BD.whatsapp.phoneE164}</p>
+              <p className="mt-3 text-xs text-muted-foreground">Number: {phone}</p>
             </CardContent>
           </Card>
 

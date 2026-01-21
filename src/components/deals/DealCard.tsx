@@ -2,11 +2,17 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CountdownPill from "@/components/deals/CountdownPill";
-import { FlashDeal, whatsappOrderLink } from "@/config/soldbd";
+import { FlashDeal, SOLD_BD } from "@/config/soldbd";
+import { whatsappOrderLink } from "@/lib/whatsapp";
+import { useSiteSettings } from "@/lib/useSiteSettings";
 
 export default function DealCard({ deal }: { deal: FlashDeal }) {
+  const settings = useSiteSettings();
+  const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
+
   const soldOut = deal.stock <= 0;
   const whatsappHref = whatsappOrderLink(
+    phone,
     `Hi sold.bd! I want to buy: ${deal.title}${deal.priceBdt ? ` (৳${deal.priceBdt})` : ""}. Is it still available?`,
   );
 
