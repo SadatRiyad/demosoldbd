@@ -7,6 +7,11 @@ import { usePageMeta } from "@/lib/usePageMeta";
 import { useDeals } from "@/lib/useDeals";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 import { whatsappOrderLink } from "@/lib/whatsapp";
+import FeaturedDealsSection from "@/components/home/FeaturedDealsSection";
+import FaqSection from "@/components/home/FaqSection";
+import AboutTeaserSection from "@/components/home/AboutTeaserSection";
+import DealCard from "@/components/deals/DealCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -34,7 +39,9 @@ export default function Index() {
   const nextLabel = next.days > 0 ? `${next.days}d ${pad(next.hours)}h` : `${pad(next.hours)}:${pad(next.minutes)}:${pad(next.seconds)}`;
 
   const dealsQuery = useDeals();
-  const deals = dealsQuery.data?.length ? dealsQuery.data : SOLD_BD.deals;
+  const hasDeals = (dealsQuery.data?.length ?? 0) > 0;
+  const deals = hasDeals ? dealsQuery.data! : SOLD_BD.deals;
+  const dealsLoading = dealsQuery.isLoading && !hasDeals;
 
   const features =
     ((settings.data?.content as any)?.features as Array<{ title: string; desc: string }> | undefined) ??
@@ -62,10 +69,10 @@ export default function Index() {
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="animate-fade-in">
               <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">{headerKicker}</Badge>
-              <h1 className="mt-5 text-4xl font-extrabold tracking-tight md:text-5xl">
+              <h1 className="mt-5 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
                 {heroH1}
               </h1>
-              <p className="mt-4 max-w-xl text-lg text-muted-foreground">
+              <p className="mt-4 max-w-xl text-lg text-muted-foreground md:text-xl">
                 {heroSubtitle}
               </p>
 
@@ -99,33 +106,35 @@ export default function Index() {
             </div>
 
             <div className="relative animate-enter">
-              <div className="rounded-2xl border bg-card p-6 shadow-premium">
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold">Today’s highlights</div>
-                    <a className="text-sm text-primary hover:underline" href="/deals">
-                      View all
-                    </a>
-                  </div>
-                  <div className="grid gap-3">
-                    {deals.slice(0, 3).map((d) => (
-                      <div key={d.id} className="flex items-center gap-3 rounded-xl border p-3">
-                        <img src={d.imageUrl} alt={`${d.title} thumbnail`} className="h-14 w-14 rounded-lg object-cover" loading="lazy" />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-semibold">{d.title}</div>
-                          <div className="truncate text-xs text-muted-foreground">{d.description}</div>
-                        </div>
-                        <Badge variant={d.stock <= 0 ? "destructive" : "secondary"}>{d.stock <= 0 ? "Sold" : `${d.stock} left`}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
-                    Pro tip: turn on notifications in WhatsApp so you never miss a drop.
-                  </div>
-                </div>
-              </div>
+              <FeaturedDealsSection deals={deals} loading={dealsLoading} />
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="container py-14 md:py-18" aria-labelledby="live-deals-title">
+        <header className="max-w-2xl">
+          <h2 id="live-deals-title" className="text-2xl font-extrabold tracking-tight md:text-3xl">
+            Flash deals live right now
+          </h2>
+          <p className="mt-2 text-muted-foreground">Fresh drops, clear timers, and WhatsApp ordering in one tap.</p>
+        </header>
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {dealsLoading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="overflow-hidden rounded-lg border bg-card shadow-premium">
+                <Skeleton className="h-44 w-full" />
+                <div className="space-y-3 p-5">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+              </div>
+            ))
+          ) : (
+            deals.slice(0, 6).map((d) => <DealCard key={d.id} deal={d} />)
+          )}
         </div>
       </section>
 
@@ -149,26 +158,28 @@ export default function Index() {
         </div>
       </section>
 
-      <section className="container pb-16">
+      <section className="container py-14 md:py-18" aria-labelledby="trust-title">
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="shadow-premium lg:col-span-2">
             <CardContent className="p-8">
-              <h3 className="text-xl font-extrabold tracking-tight">Social proof that builds trust</h3>
-              <p className="mt-2 text-muted-foreground">(Optional section) Replace these with real Bangladeshi customer quotes when ready.</p>
+              <h2 id="trust-title" className="text-xl font-extrabold tracking-tight md:text-2xl">
+                Social proof that builds trust
+              </h2>
+              <p className="mt-2 text-muted-foreground">Replace these with real buyer quotes when you’re ready.</p>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {socialProof.map((q, idx) => (
-                    <div key={idx} className="rounded-xl border bg-card p-5">
-                      <div className="text-sm text-muted-foreground">“{q}”</div>
-                      <div className="mt-3 text-xs font-medium">Early buyer • Dhaka</div>
-                    </div>
-                  ))}
+                  <div key={idx} className="rounded-xl border bg-card p-5">
+                    <div className="text-sm text-muted-foreground">“{q}”</div>
+                    <div className="mt-3 text-xs font-medium">Early buyer • Dhaka</div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-premium">
             <CardContent className="p-8">
-              <h3 className="text-xl font-extrabold tracking-tight">Don’t miss the next drop</h3>
+              <h2 className="text-xl font-extrabold tracking-tight md:text-2xl">Don’t miss the next drop</h2>
               <p className="mt-2 text-sm text-muted-foreground">Join the WhatsApp list for early access and alerts.</p>
               <Button asChild size="lg" className="mt-6 w-full">
                 <a href={whatsappHref} target="_blank" rel="noreferrer">
@@ -180,6 +191,9 @@ export default function Index() {
           </Card>
         </div>
       </section>
+
+      <FaqSection />
+      <AboutTeaserSection />
     </div>
   );
 }
