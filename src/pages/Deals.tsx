@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePageMeta } from "@/lib/usePageMeta";
+import { useDeals } from "@/lib/useDeals";
 
 type SortMode = "timeLeft" | "stock";
 
@@ -26,12 +27,15 @@ export default function Deals() {
   const [sort, setSort] = React.useState<SortMode>("timeLeft");
   const [page, setPage] = React.useState(1);
 
+  const dealsQuery = useDeals();
+  const deals = dealsQuery.data?.length ? dealsQuery.data : SOLD_BD.deals;
+
   const pageSize = 8;
 
   const filtered = React.useMemo(() => {
-    const base = category === "All" ? SOLD_BD.deals : SOLD_BD.deals.filter((d) => d.category === category);
+    const base = category === "All" ? deals : deals.filter((d) => d.category === category);
     return sortDeals(base, sort);
-  }, [category, sort]);
+  }, [category, sort, deals]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -89,6 +93,12 @@ export default function Deals() {
             <DealCard key={deal.id} deal={deal} />
           ))}
         </div>
+
+        {dealsQuery.isError && (
+          <div className="mt-6 text-sm text-muted-foreground">
+            Showing demo deals (couldn’t load live deals from the database).
+          </div>
+        )}
 
         <div className="mt-10 flex items-center justify-center gap-3">
           <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}>
