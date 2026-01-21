@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SOLD_BD, whatsappOrderLink } from "@/config/soldbd";
+import { SOLD_BD } from "@/config/soldbd";
 import { useCountdown } from "@/lib/useCountdown";
 import { usePageMeta } from "@/lib/usePageMeta";
 import { useDeals } from "@/lib/useDeals";
+import { useSiteSettings } from "@/lib/useSiteSettings";
+import { whatsappOrderLink } from "@/lib/whatsapp";
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -16,12 +18,36 @@ export default function Index() {
     description: "Get it before it’s sold — limited-stock flash deals from Bangladeshi sellers. Order fast on WhatsApp.",
   });
 
-  const next = useCountdown(SOLD_BD.nextDropAt);
-  const whatsappHref = whatsappOrderLink(SOLD_BD.whatsapp.defaultMessage);
+  const settings = useSiteSettings();
+
+  const phone = settings.data?.whatsapp_phone_e164 ?? SOLD_BD.whatsapp.phoneE164;
+  const defaultMsg = settings.data?.whatsapp_default_message ?? SOLD_BD.whatsapp.defaultMessage;
+  const nextDropAt = settings.data?.next_drop_at ?? SOLD_BD.nextDropAt;
+
+  const headerKicker = settings.data?.header_kicker ?? "Live drops • Limited stock";
+  const heroH1 = settings.data?.hero_h1 ?? "Get it Before it’s Sold — Bangladesh’s Flash Deals Marketplace";
+  const heroSubtitle =
+    settings.data?.hero_subtitle ?? "Limited-stock drops from local sellers. Miss it, it’s gone forever.";
+
+  const next = useCountdown(nextDropAt);
+  const whatsappHref = whatsappOrderLink(phone, defaultMsg);
   const nextLabel = next.days > 0 ? `${next.days}d ${pad(next.hours)}h` : `${pad(next.hours)}:${pad(next.minutes)}:${pad(next.seconds)}`;
 
   const dealsQuery = useDeals();
   const deals = dealsQuery.data?.length ? dealsQuery.data : SOLD_BD.deals;
+
+  const features =
+    ((settings.data?.content as any)?.features as Array<{ title: string; desc: string }> | undefined) ??
+    [
+      { title: "⏳ Limited Time Deals", desc: "Every drop has a clear timer — no guesswork." },
+      { title: "📦 Limited Stock", desc: "Real stock counts. When it’s sold, it’s gone." },
+      { title: "🇧🇩 Local Sellers", desc: "Curated deals from Bangladeshi merchants." },
+      { title: "💬 WhatsApp Ordering", desc: "Fast ordering without complex checkout steps." },
+    ];
+
+  const socialProof =
+    ((settings.data?.content as any)?.socialProof as string[] | undefined) ??
+    ["Fast response on WhatsApp — got my deal confirmed in minutes.", "Stock was accurate. When it says 7 left, it’s real."];
 
   return (
     <div className="bg-background">
@@ -35,12 +61,12 @@ export default function Index() {
         <div className="container relative py-16 md:py-24">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="animate-fade-in">
-              <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">Live drops • Limited stock</Badge>
+              <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">{headerKicker}</Badge>
               <h1 className="mt-5 text-4xl font-extrabold tracking-tight md:text-5xl">
-                Get it Before it’s Sold — Bangladesh’s Flash Deals Marketplace
+                {heroH1}
               </h1>
               <p className="mt-4 max-w-xl text-lg text-muted-foreground">
-                Limited-stock drops from local sellers. Miss it, it’s gone forever.
+                {heroSubtitle}
               </p>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -110,12 +136,7 @@ export default function Index() {
         </header>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { title: "⏳ Limited Time Deals", desc: "Every drop has a clear timer — no guesswork." },
-            { title: "📦 Limited Stock", desc: "Real stock counts. When it’s sold, it’s gone." },
-            { title: "🇧🇩 Local Sellers", desc: "Curated deals from Bangladeshi merchants." },
-            { title: "💬 WhatsApp Ordering", desc: "Fast ordering without complex checkout steps." },
-          ].map((f) => (
+          {features.map((f) => (
             <Card key={f.title} className="shadow-premium hover-scale">
               <CardHeader>
                 <CardTitle className="text-base">{f.title}</CardTitle>
@@ -135,8 +156,7 @@ export default function Index() {
               <h3 className="text-xl font-extrabold tracking-tight">Social proof that builds trust</h3>
               <p className="mt-2 text-muted-foreground">(Optional section) Replace these with real Bangladeshi customer quotes when ready.</p>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {["Fast response on WhatsApp — got my deal confirmed in minutes.", "Stock was accurate. When it says 7 left, it’s real."]
-                  .map((q, idx) => (
+                {socialProof.map((q, idx) => (
                     <div key={idx} className="rounded-xl border bg-card p-5">
                       <div className="text-sm text-muted-foreground">“{q}”</div>
                       <div className="mt-3 text-xs font-medium">Early buyer • Dhaka</div>
