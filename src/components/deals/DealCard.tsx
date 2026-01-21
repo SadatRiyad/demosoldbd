@@ -6,6 +6,7 @@ import { FlashDeal, SOLD_BD } from "@/config/soldbd";
 import { whatsappOrderLink } from "@/lib/whatsapp";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 import { DEAL_CATEGORY_META } from "@/lib/dealCategoryMeta";
+import { useCountdown } from "@/lib/useCountdown";
 
 export default function DealCard({ deal }: { deal: FlashDeal }) {
   const settings = useSiteSettings();
@@ -14,6 +15,11 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
   const soldOut = deal.stock <= 0;
   const isExpired = new Date(deal.endsAt).getTime() <= Date.now();
   const isLive = !soldOut && !isExpired;
+
+  const c = useCountdown(deal.endsAt);
+  const secondsLeft = c.days * 86400 + c.hours * 3600 + c.minutes * 60 + c.seconds;
+  const endsSoon = !c.isComplete && secondsLeft > 0 && secondsLeft <= 600;
+
   const whatsappHref = whatsappOrderLink(
     phone,
     `Hi sold.bd! I want to buy: ${deal.title}${deal.priceBdt ? ` (৳${deal.priceBdt})` : ""}. Is it still available?`,
@@ -35,6 +41,11 @@ export default function DealCard({ deal }: { deal: FlashDeal }) {
             <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">LIVE</Badge>
           ) : isExpired ? (
             <Badge variant="secondary">SOLD</Badge>
+          ) : null}
+          {endsSoon ? (
+            <Badge variant="secondary" className="px-2 py-0 text-[10px] font-semibold">
+              Ends soon
+            </Badge>
           ) : null}
           <Badge variant="secondary" className="inline-flex items-center gap-1.5">
             {(() => {
