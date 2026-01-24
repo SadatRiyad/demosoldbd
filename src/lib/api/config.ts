@@ -7,8 +7,9 @@ export type ApiMode = "lovable" | "node";
 function readApiMode(): ApiMode {
   const explicit = (import.meta.env.VITE_API_MODE as string | undefined)?.toLowerCase();
   if (explicit === "lovable" || explicit === "node") return explicit;
-  // Default: dev -> lovable, prod -> node
-  return import.meta.env.PROD ? "node" : "lovable";
+  // Default: always use your Express API.
+  // (You can still override with VITE_API_MODE=lovable when needed.)
+  return "node";
 }
 
 /**
