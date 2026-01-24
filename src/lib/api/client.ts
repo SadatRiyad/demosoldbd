@@ -15,6 +15,22 @@ function withSlashTrim(v: string) {
   return v.replace(/\/+$/, "");
 }
 
+function resolveNodeBaseUrl(): string {
+  const explicit = withSlashTrim(NODE_API_BASE_URL ?? "");
+  if (explicit) return explicit;
+
+  // Safe browser-only fallback so production doesn't crash if env is missing.
+  // Assumes split domains: sold.bd (frontend) + api.sold.bd (API).
+  if (typeof window === "undefined") return "";
+  const { protocol, hostname } = window.location;
+
+  // Local dev convenience.
+  if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3001";
+
+  const apiHost = hostname.startsWith("api.") ? hostname : `api.${hostname.replace(/^www\./, "")}`;
+  return `${protocol}//${apiHost}`;
+}
+
 async function getAuthHeader(): Promise<string | null> {
   if (API_MODE === "node") {
     const token = getNodeAccessToken();
@@ -52,8 +68,8 @@ async function fetchWithRetry(url: string, init: RequestInit, retries = 2): Prom
 }
 
 async function invokeNode<T>(functionName: string, opts: ApiInvokeOptions = {}): Promise<ApiResult<T>> {
-  const base = withSlashTrim(NODE_API_BASE_URL);
-  if (!base) return { data: null, error: new Error("NODE_API_BASE_URL is not set") };
+  const base = resolveNodeBaseUrl();
+  if (!base) return { data: null, error: new Error("Node API base URL could not be resolved") };
 
   const url = `${base}${nodeFunctionPath(functionName)}`;
   const method = (opts.method ?? "POST").toUpperCase();

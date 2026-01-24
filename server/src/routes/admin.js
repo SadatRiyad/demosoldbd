@@ -53,6 +53,55 @@ function mountAdminRoutes(app, { pool, upload }) {
     }),
   );
 
+  // Production deploy checks (admin-only)
+  app.get(
+    "/api/admin-deploy-check",
+    asyncHandler(async (req, res) => {
+      const auth = requireAdminAuth(req, res);
+      if (!auth) return;
+
+      const checks = [
+        { key: "NODE_ENV", label: "NODE_ENV is set", ok: !!process.env.NODE_ENV, message: "Set to 'production'" },
+        { key: "JWT_SECRET", label: "JWT secret configured", ok: !!process.env.JWT_SECRET, message: "Required for access tokens" },
+        {
+          key: "REFRESH_SECRET",
+          label: "Refresh secret configured",
+          ok: !!process.env.REFRESH_SECRET,
+          message: "Required for refresh tokens",
+        },
+        {
+          key: "CORS_ORIGIN",
+          label: "CORS origin configured",
+          ok: !!process.env.CORS_ORIGIN,
+          message: "Should include https://sold.bd",
+        },
+        {
+          key: "ADMIN_BOOTSTRAP_TOKEN",
+          label: "Admin bootstrap token set",
+          ok: !!process.env.ADMIN_BOOTSTRAP_TOKEN,
+          message: "Only needed for /admin/bootstrap",
+        },
+        { key: "HOSTINGER_MYSQL_HOST", label: "MySQL host", ok: !!process.env.HOSTINGER_MYSQL_HOST, message: "Missing" },
+        { key: "HOSTINGER_MYSQL_PORT", label: "MySQL port", ok: !!process.env.HOSTINGER_MYSQL_PORT, message: "Missing" },
+        { key: "HOSTINGER_MYSQL_USER", label: "MySQL user", ok: !!process.env.HOSTINGER_MYSQL_USER, message: "Missing" },
+        {
+          key: "HOSTINGER_MYSQL_PASSWORD",
+          label: "MySQL password",
+          ok: !!process.env.HOSTINGER_MYSQL_PASSWORD,
+          message: "Missing",
+        },
+        {
+          key: "HOSTINGER_MYSQL_DATABASE",
+          label: "MySQL database",
+          ok: !!process.env.HOSTINGER_MYSQL_DATABASE,
+          message: "Missing",
+        },
+      ].map((c) => ({ ...c, message: c.ok ? undefined : c.message }));
+
+      res.json({ ok: true, checks, runtime: { nodeEnv: process.env.NODE_ENV ?? null } });
+    }),
+  );
+
   // Admin deals CRUD
   app.get(
     "/api/admin-deals",
