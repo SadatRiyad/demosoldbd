@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { API_MODE, NODE_API_BASE_URL, NODE_AUTH_REFRESH_PATH, nodeFunctionPath } from "@/lib/api/config";
 import { getNodeAccessToken, refreshNodeSession } from "@/lib/api/nodeAuth";
+import { resolveNodeApiBaseUrl } from "@/lib/api/nodeBaseUrl";
 import type { ApiRoutes, ApiFunctionName } from "@/lib/api/types";
 
 export type ApiInvokeOptions = {
@@ -15,28 +16,9 @@ function withSlashTrim(v: string) {
   return v.replace(/\/+$/, "");
 }
 
-function isLovablePreviewHost(hostname: string) {
-  return hostname.endsWith(".lovable.app") || hostname.endsWith(".lovableproject.com");
-}
-
 function resolveNodeBaseUrl(): string {
-  const explicit = withSlashTrim(NODE_API_BASE_URL ?? "");
-  if (explicit) return explicit;
-
-  // Safe browser-only fallback so production doesn't crash if env is missing.
-  // Assumes split domains: sold.bd (frontend) + api.sold.bd (API).
-  if (typeof window === "undefined") return "";
-  const { protocol, hostname } = window.location;
-
-  // Local dev convenience.
-  if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3001";
-
-  // In Lovable preview, there is no guarantee that api.<preview-host> exists.
-  // Require an explicit base URL instead of guessing.
-  if (isLovablePreviewHost(hostname)) return "";
-
-  const apiHost = hostname.startsWith("api.") ? hostname : `api.${hostname.replace(/^www\./, "")}`;
-  return `${protocol}//${apiHost}`;
+  // Single source of truth (supports localStorage override in preview).
+  return withSlashTrim(resolveNodeApiBaseUrl(NODE_API_BASE_URL) ?? "");
 }
 
 async function getAuthHeader(): Promise<string | null> {
