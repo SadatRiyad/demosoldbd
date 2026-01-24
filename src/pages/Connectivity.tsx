@@ -23,6 +23,40 @@ function withSlashTrim(v: string) {
   return v.replace(/\/+$/, "");
 }
 
+function normalizeApiBase(input: string) {
+  const raw = input.trim();
+  if (!raw) return "";
+
+  // If user pasted an endpoint, strip common paths.
+  let v = raw.replace(/\s+/g, "");
+  v = v.replace(/\/api\/health\/?$/i, "");
+  v = v.replace(/\/+$/, "");
+
+  // Add scheme if missing.
+  if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
+
+  try {
+    const u = new URL(v);
+    // Keep only origin (scheme + host + optional port).
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return v;
+  }
+}
+
+function looksLikeHtml(text: string) {
+  const t = text.trimStart().toLowerCase();
+  return t.startsWith("<!doctype") || t.startsWith("<html") || t.startsWith("<head") || t.startsWith("<body");
+}
+
+function misrouteHints(origin: string, apiBase: string) {
+  return [
+    `Your API base (${apiBase}) is serving the frontend (HTML), not the Node API.`,
+    `Fix DNS/domain binding so api.${new URL(origin).hostname.replace(/^www\./, "")} points to your backend server (or attach the domain to your Node app in Hostinger).`,
+    "If using Cloudflare proxy, keep SSL/TLS on Full (strict) and ensure it forwards /api/* to the Node service (no page rules redirecting to the frontend).",
+  ];
+}
+
 function badgeVariantFor(status: StepStatus) {
   if (status === "ok") return "outline" as const;
   if (status === "warn") return "outline" as const;
@@ -182,11 +216,25 @@ export default function Connectivity() {
     try {
       const res = await fetch(healthUrl, { method: "GET" });
       const text = await safeText(res);
+
+      const contentType = res.headers.get("content-type") ?? "";
+      const htmlish = looksLikeHtml(text) || contentType.includes("text/html");
+
       if (!res.ok) {
         updateStep("health-cors", {
           status: "warn",
           details: `Reached ${healthUrl} but got HTTP ${res.status}. Body: ${text.slice(0, 300)}`,
           hints: guessHints({ origin, apiBase: base, stepKey: "health-cors" }),
+        });
+      } else if (htmlish) {
+        updateStep("health-cors", {
+          status: "fail",
+          details:
+            `Expected JSON from ${healthUrl}, but received HTML (your frontend).
+This means api.sold.bd is routed to the frontend instead of the Node API.
+
+First 300 chars:\n${text.slice(0, 300)}`,
+          hints: misrouteHints(origin, base),
         });
       } else {
         updateStep("health-cors", {
@@ -212,10 +260,16 @@ export default function Connectivity() {
       });
       const text = await safeText(res);
 
+      const contentType = res.headers.get("content-type") ?? "";
+      const htmlish = looksLikeHtml(text) || contentType.includes("text/html");
+
       // Any HTTP response means POST+preflight worked.
       updateStep("auth-probe", {
-        status: "ok",
-        details: `Responded with HTTP ${res.status}. Body: ${text.slice(0, 300)}`,
+        status: htmlish ? "fail" : "ok",
+        details: htmlish
+          ? `Expected JSON from ${loginUrl}, but received HTML (likely routed to frontend).\n\nFirst 300 chars:\n${text.slice(0, 300)}`
+          : `Responded with HTTP ${res.status}. Body: ${text.slice(0, 300)}`,
+        hints: htmlish ? misrouteHints(origin, base) : undefined,
       });
     } catch (e) {
       updateStep("auth-probe", {
@@ -275,7 +329,9 @@ export default function Connectivity() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setRuntimeNodeApiBaseUrl(apiBaseDraft);
+                    const normalized = normalizeApiBase(apiBaseDraft);
+                    setApiBaseDraft(normalized);
+                    setRuntimeNodeApiBaseUrl(normalized);
                     toast({ title: "Saved", description: "API base URL saved in this browser." });
                   }}
                 >
