@@ -4,6 +4,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
+import { API_MODE, NODE_API_BASE_URL } from "@/lib/api/config";
+import { setNodeTokens } from "@/lib/api/nodeAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,11 +37,24 @@ export default function Login() {
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-      if (error) throw error;
+      if (API_MODE === "node") {
+        if (!NODE_API_BASE_URL) throw new Error("VITE_NODE_API_BASE_URL is not set");
+        const res = await fetch(`${NODE_API_BASE_URL.replace(/\/+$/, "")}/api/auth/login`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: values.email, password: values.password }),
+        });
+        const json = (await res.json().catch(() => null)) as any;
+        if (!res.ok) throw new Error(String(json?.error ?? "Login failed"));
+        if (!json?.accessToken || !json?.refreshToken) throw new Error("Invalid login response");
+        setNodeTokens({ accessToken: String(json.accessToken), refreshToken: String(json.refreshToken) });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+        if (error) throw error;
+      }
       navigate(from, { replace: true });
     } catch (e) {
       toast({ title: "Login failed", description: (e as Error).message, variant: "destructive" });

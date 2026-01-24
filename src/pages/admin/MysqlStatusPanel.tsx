@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { API_MODE } from "@/lib/api/config";
+import { apiInvoke } from "@/lib/api/client";
 
 type Check = {
   key: string;
@@ -25,11 +27,17 @@ export default function MysqlStatusPanel() {
   async function load() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke<MysqlStatusResponse>("admin-mysql-status", {
-        method: "GET",
-      });
-      if (error) throw error;
-      setData(data ?? null);
+      if (API_MODE === "node") {
+        const { data, error } = await apiInvoke<MysqlStatusResponse>("admin-mysql-status", { method: "GET" });
+        if (error) throw error;
+        setData(data ?? null);
+      } else {
+        const { data, error } = await supabase.functions.invoke<MysqlStatusResponse>("admin-mysql-status", {
+          method: "GET",
+        });
+        if (error) throw error;
+        setData(data ?? null);
+      }
     } catch (e) {
       toast({ title: "Load failed", description: (e as Error).message, variant: "destructive" });
     } finally {
