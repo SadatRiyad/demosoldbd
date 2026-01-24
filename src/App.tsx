@@ -9,6 +9,7 @@ import Deals from "./pages/Deals";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Health from "./pages/Health";
+import Connectivity from "./pages/Connectivity";
 import SiteLayout from "./components/site/SiteLayout";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/health" element={<Health />} />
+            <Route path="/connectivity" element={<Connectivity />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route
