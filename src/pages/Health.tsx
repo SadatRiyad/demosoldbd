@@ -9,10 +9,30 @@ import { resolveNodeApiBaseUrl, setRuntimeNodeApiBaseUrl } from "@/lib/api/nodeB
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 
+function normalizeApiBase(input: string) {
+  const raw = input.trim();
+  if (!raw) return "";
+  let v = raw.replace(/\s+/g, "");
+  v = v.replace(/\/api\/health\/?$/i, "");
+  v = v.replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
+  try {
+    const u = new URL(v);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return v;
+  }
+}
+
+function isValidHttpBase(v: string) {
+  return /^https?:\/\//i.test(v);
+}
+
 export default function Health() {
   const { toast } = useToast();
   const [apiBaseDraft, setApiBaseDraft] = React.useState("");
   const resolvedBase = resolveNodeApiBaseUrl(import.meta.env.VITE_NODE_API_BASE_URL as string | undefined);
+  const resolvedBaseOk = Boolean(resolvedBase) && isValidHttpBase(resolvedBase);
 
   const q = useQuery({
     queryKey: ["health-page", API_MODE],
@@ -47,7 +67,7 @@ export default function Health() {
         </Badge>
       </header>
 
-      {API_MODE === "node" && !resolvedBase ? (
+      {API_MODE === "node" && !resolvedBaseOk ? (
         <div className="mt-6 rounded-lg border bg-card p-4">
           <div className="text-sm font-medium">Express API base URL</div>
           <div className="mt-1 text-xs text-muted-foreground">
@@ -56,7 +76,7 @@ export default function Health() {
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <Input
               placeholder="https://api.sold.bd"
-              value={apiBaseDraft}
+              value={apiBaseDraft || resolvedBase || ""}
               onChange={(e) => setApiBaseDraft(e.target.value)}
               autoCapitalize="none"
               autoCorrect="off"
@@ -66,7 +86,9 @@ export default function Health() {
               type="button"
               variant="outline"
               onClick={() => {
-                setRuntimeNodeApiBaseUrl(apiBaseDraft);
+                const normalized = normalizeApiBase(apiBaseDraft || resolvedBase || "");
+                setApiBaseDraft(normalized);
+                setRuntimeNodeApiBaseUrl(normalized);
                 toast({ title: "Saved", description: "API base URL saved. Re-running health check…" });
                 void q.refetch();
               }}
