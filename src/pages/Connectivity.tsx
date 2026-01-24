@@ -46,13 +46,28 @@ function normalizeApiBase(input: string) {
 
 function looksLikeHtml(text: string) {
   const t = text.trimStart().toLowerCase();
-  return t.startsWith("<!doctype") || t.startsWith("<html") || t.startsWith("<head") || t.startsWith("<body");
+  if (t.startsWith("<!doctype") || t.startsWith("<html") || t.startsWith("<head") || t.startsWith("<body")) return true;
+  // Some hosts return an HTML page but the preview truncation may omit tags; catch common signals.
+  return t.includes("</html>") || t.includes("</head>") || t.includes("</body>") || t.includes("<script") || t.includes("<meta");
 }
 
 function misrouteHints(origin: string, apiBase: string) {
+  let apiHost = apiBase;
+  try {
+    apiHost = new URL(apiBase).hostname;
+  } catch {
+    // keep as-is
+  }
+  let originHost = origin;
+  try {
+    originHost = new URL(origin).hostname;
+  } catch {
+    // keep as-is
+  }
   return [
-    `Your API base (${apiBase}) is serving the frontend (HTML), not the Node API.`,
-    `Fix DNS/domain binding so api.${new URL(origin).hostname.replace(/^www\./, "")} points to your backend server (or attach the domain to your Node app in Hostinger).`,
+    `Your API base (${apiHost}) is serving a frontend page (HTML/text), not the Node API.`,
+    `Fix DNS/domain binding so ${apiHost} points to your backend server (or attach ${apiHost} to your Node app in Hostinger).`,
+    `Also ensure CORS_ORIGIN allows your frontend origin (${originHost}).`,
     "If using Cloudflare proxy, keep SSL/TLS on Full (strict) and ensure it forwards /api/* to the Node service (no page rules redirecting to the frontend).",
   ];
 }
@@ -263,13 +278,18 @@ First 300 chars:\n${text.slice(0, 300)}`,
       const contentType = res.headers.get("content-type") ?? "";
       const htmlish = looksLikeHtml(text) || contentType.includes("text/html");
 
+      // We expect this endpoint to exist; 404 usually means misroute or missing API deployment.
+      const missingRoute = res.status === 404;
+
       // Any HTTP response means POST+preflight worked.
       updateStep("auth-probe", {
-        status: htmlish ? "fail" : "ok",
-        details: htmlish
-          ? `Expected JSON from ${loginUrl}, but received HTML (likely routed to frontend).\n\nFirst 300 chars:\n${text.slice(0, 300)}`
-          : `Responded with HTTP ${res.status}. Body: ${text.slice(0, 300)}`,
-        hints: htmlish ? misrouteHints(origin, base) : undefined,
+        status: missingRoute || htmlish ? "fail" : "ok",
+        details: missingRoute
+          ? `POST reached ${loginUrl} but got HTTP 404 (endpoint not found). This usually means the request is not hitting your Node API or the API isn’t deployed with auth routes.\n\nFirst 300 chars:\n${text.slice(0, 300)}`
+          : htmlish
+            ? `Expected JSON from ${loginUrl}, but received HTML/text (likely routed to frontend).\n\nFirst 300 chars:\n${text.slice(0, 300)}`
+            : `Responded with HTTP ${res.status}. Body: ${text.slice(0, 300)}`,
+        hints: missingRoute || htmlish ? misrouteHints(origin, base) : undefined,
       });
     } catch (e) {
       updateStep("auth-probe", {
