@@ -15,6 +15,10 @@ function withSlashTrim(v: string) {
   return v.replace(/\/+$/, "");
 }
 
+function isLovablePreviewHost(hostname: string) {
+  return hostname.endsWith(".lovable.app") || hostname.endsWith(".lovableproject.com");
+}
+
 function resolveNodeBaseUrl(): string {
   const explicit = withSlashTrim(NODE_API_BASE_URL ?? "");
   if (explicit) return explicit;
@@ -26,6 +30,10 @@ function resolveNodeBaseUrl(): string {
 
   // Local dev convenience.
   if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3001";
+
+  // In Lovable preview, there is no guarantee that api.<preview-host> exists.
+  // Require an explicit base URL instead of guessing.
+  if (isLovablePreviewHost(hostname)) return "";
 
   const apiHost = hostname.startsWith("api.") ? hostname : `api.${hostname.replace(/^www\./, "")}`;
   return `${protocol}//${apiHost}`;
@@ -69,7 +77,13 @@ async function fetchWithRetry(url: string, init: RequestInit, retries = 2): Prom
 
 async function invokeNode<T>(functionName: string, opts: ApiInvokeOptions = {}): Promise<ApiResult<T>> {
   const base = resolveNodeBaseUrl();
-  if (!base) return { data: null, error: new Error("Node API base URL could not be resolved") };
+  if (!base)
+    return {
+      data: null,
+      error: new Error(
+        "Node API base URL could not be resolved. Set VITE_NODE_API_BASE_URL (e.g. https://api.sold.bd) for this environment.",
+      ),
+    };
 
   const url = `${base}${nodeFunctionPath(functionName)}`;
   const method = (opts.method ?? "POST").toUpperCase();

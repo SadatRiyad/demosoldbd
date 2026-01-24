@@ -18,6 +18,7 @@ function resolvedApiBaseUrl(): string {
   if (typeof window === "undefined") return "";
   const { protocol, hostname } = window.location;
   if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3001";
+  if (hostname.endsWith(".lovable.app") || hostname.endsWith(".lovableproject.com")) return "";
   const apiHost = hostname.startsWith("api.") ? hostname : `api.${hostname.replace(/^www\./, "")}`;
   return `${protocol}//${apiHost}`;
 }
@@ -49,7 +50,11 @@ export default function Login() {
     try {
       if (API_MODE === "node") {
         const base = resolvedApiBaseUrl();
-        if (!base) throw new Error("Node API base URL could not be resolved");
+        if (!base) {
+          throw new Error(
+            "Cannot reach your Express API from this preview host. Set VITE_NODE_API_BASE_URL to your real API domain (e.g. https://api.sold.bd) or use localhost during dev.",
+          );
+        }
         const res = await fetch(`${base}/api/auth/login`, {
           method: "POST",
           headers: { "content-type": "application/json" },
