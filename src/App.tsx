@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import BootstrapAdmin from "./pages/admin/BootstrapAdmin";
+import Deploy from "./pages/admin/Deploy";
 import { RequireAuth, RequireAdmin } from "./components/auth/RouteGuards";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,16 @@ const App = () => (
                   <RequireAuth>
                     <RequireAdmin>
                       <AdminDashboard />
+                    </RequireAdmin>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/deploy"
+                element={
+                  <RequireAuth>
+                    <RequireAdmin>
+                      <Deploy />
                     </RequireAdmin>
                   </RequireAuth>
                 }

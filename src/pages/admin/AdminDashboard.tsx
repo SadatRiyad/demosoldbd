@@ -9,6 +9,7 @@ import EarlyAccessPanel from "@/pages/admin/EarlyAccessPanel";
 import ExternalStoragePanel from "@/pages/admin/ExternalStoragePanel";
 import MysqlStatusPanel from "@/pages/admin/MysqlStatusPanel";
 import FaqPanel from "@/pages/admin/FaqPanel";
+import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   usePageMeta({ title: "Admin | sold.bd", description: "Admin dashboard for sold.bd." });
@@ -22,9 +23,14 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Admin Dashboard</h1>
             <p className="mt-2 text-muted-foreground">Manage brand settings, deals, and signups.</p>
           </div>
-          <Button variant="outline" onClick={() => signOut()}>
-            Log out
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button variant="outline" asChild>
+              <Link to="/admin/deploy">Deploy checklist</Link>
+            </Button>
+            <Button variant="outline" onClick={() => signOut()}>
+              Log out
+            </Button>
+          </div>
         </div>
 
         <Card className="mt-8 shadow-premium">

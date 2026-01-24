@@ -13,6 +13,7 @@ export type ApiFunctionName =
   | "early-access"
   | "bootstrap-admin"
   | "admin-mysql-status"
+  | "admin-deploy-check"
   | "admin-site-settings"
   | "admin-deals"
   | "admin-early-access"
@@ -66,6 +67,14 @@ export type EarlyAccess_Post_Response = { ok: true } | { ok: false; error: strin
 // Admin
 export type AdminMysqlStatus_Get_Response = {
   checks: Array<{ key: string; ok: boolean; message: string }>;
+};
+
+export type AdminDeployCheck_Get_Response = {
+  ok: true;
+  checks: Array<{ key: string; label: string; ok: boolean; message?: string }>;
+  runtime: {
+    nodeEnv: string | null;
+  };
 };
 
 export type AdminSiteSettings_Put_Body = Partial<
@@ -140,6 +149,9 @@ export type ApiRoutes = {
   };
   "admin-mysql-status": {
     GET: { body: undefined; response: AdminMysqlStatus_Get_Response };
+  };
+  "admin-deploy-check": {
+    GET: { body: undefined; response: AdminDeployCheck_Get_Response };
   };
   "admin-site-settings": {
     PUT: { body: AdminSiteSettings_Put_Body; response: AdminSiteSettings_Put_Response };
