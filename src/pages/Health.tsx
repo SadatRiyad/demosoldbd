@@ -1,10 +1,19 @@
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { API_MODE } from "@/lib/api/config";
 import { apiInvokeTyped } from "@/lib/api/client";
+import { resolveNodeApiBaseUrl, setRuntimeNodeApiBaseUrl } from "@/lib/api/nodeBaseUrl";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Health() {
+  const { toast } = useToast();
+  const [apiBaseDraft, setApiBaseDraft] = React.useState("");
+  const resolvedBase = resolveNodeApiBaseUrl(import.meta.env.VITE_NODE_API_BASE_URL as string | undefined);
+
   const q = useQuery({
     queryKey: ["health-page", API_MODE],
     queryFn: async () => {
@@ -37,6 +46,36 @@ export default function Health() {
           <span>{online ? "Online" : q.isFetching ? "Checking" : "Offline"}</span>
         </Badge>
       </header>
+
+      {API_MODE === "node" && !resolvedBase ? (
+        <div className="mt-6 rounded-lg border bg-card p-4">
+          <div className="text-sm font-medium">Express API base URL</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            In preview we can’t auto-guess your API host. Set it once (saved in this browser) then re-run checks.
+          </div>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Input
+              placeholder="https://api.sold.bd"
+              value={apiBaseDraft}
+              onChange={(e) => setApiBaseDraft(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              inputMode="url"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setRuntimeNodeApiBaseUrl(apiBaseDraft);
+                toast({ title: "Saved", description: "API base URL saved. Re-running health check…" });
+                void q.refetch();
+              }}
+            >
+              Save & test
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card className="shadow-premium">
