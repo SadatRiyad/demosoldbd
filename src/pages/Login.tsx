@@ -4,13 +4,23 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
-import { API_MODE, NODE_API_BASE_URL } from "@/lib/api/config";
+import { API_MODE } from "@/lib/api/config";
 import { setNodeTokens } from "@/lib/api/nodeAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { usePageMeta } from "@/lib/usePageMeta";
+
+function resolvedApiBaseUrl(): string {
+  const explicit = (import.meta.env.VITE_NODE_API_BASE_URL as string | undefined) ?? "";
+  if (explicit.trim()) return explicit.trim().replace(/\/+$/, "");
+  if (typeof window === "undefined") return "";
+  const { protocol, hostname } = window.location;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3001";
+  const apiHost = hostname.startsWith("api.") ? hostname : `api.${hostname.replace(/^www\./, "")}`;
+  return `${protocol}//${apiHost}`;
+}
 
 const schema = z.object({
   email: z.string().trim().email().max(255),
@@ -38,8 +48,9 @@ export default function Login() {
     setSubmitting(true);
     try {
       if (API_MODE === "node") {
-        if (!NODE_API_BASE_URL) throw new Error("VITE_NODE_API_BASE_URL is not set");
-        const res = await fetch(`${NODE_API_BASE_URL.replace(/\/+$/, "")}/api/auth/login`, {
+        const base = resolvedApiBaseUrl();
+        if (!base) throw new Error("Node API base URL could not be resolved");
+        const res = await fetch(`${base}/api/auth/login`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ email: values.email, password: values.password }),
