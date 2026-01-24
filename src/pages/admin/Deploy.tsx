@@ -60,6 +60,7 @@ export default function Deploy() {
       if (r.error) throw r.error;
       return r.data;
     },
+    enabled: API_MODE === "node",
     retry: 1,
     refetchOnWindowFocus: false,
   });
@@ -134,6 +135,12 @@ export default function Deploy() {
             <CardTitle className="text-base">Production env verification (API)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {API_MODE !== "node" ? (
+              <div className="text-sm text-muted-foreground">
+                This check runs against your Express API and is only available in <span className="font-mono">node</span> mode.
+                In this preview environment the app defaults to <span className="font-mono">lovable</span> mode.
+              </div>
+            ) : null}
             {envQ.isPending ? (
               <div className="text-sm text-muted-foreground">Checking…</div>
             ) : envQ.status === "error" ? (
@@ -176,7 +183,7 @@ export default function Deploy() {
 
             <div className="pt-2 text-xs text-muted-foreground">
               Tip: If you want zero-config hosting, you can omit <span className="font-mono">VITE_NODE_API_BASE_URL</span> and the
-              frontend will auto-resolve it to <span className="font-mono">api.{typeof window !== "undefined" ? window.location.hostname.replace(/^www\./, "") : "your-domain"}</span>.
+              frontend will auto-resolve it to <span className="font-mono">api.&lt;your-domain&gt;</span> (for production: <span className="font-mono">api.sold.bd</span>).
             </div>
           </CardContent>
         </Card>
